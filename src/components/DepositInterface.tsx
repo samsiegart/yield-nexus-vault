@@ -66,19 +66,19 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
         <TabsList className="grid w-full grid-cols-3 bg-white/10 border-white/20">
           <TabsTrigger 
             value="deposit" 
-            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300"
+            className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-gray-300 border-0"
           >
             Deposit
           </TabsTrigger>
           <TabsTrigger 
             value="withdraw" 
-            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300"
+            className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-gray-300 border-0"
           >
             Withdraw
           </TabsTrigger>
           <TabsTrigger 
             value="rebalance" 
-            className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300"
+            className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-gray-300 border-0"
           >
             Rebalance
           </TabsTrigger>
@@ -86,7 +86,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
 
         <TabsContent value="deposit" className="space-y-6">
           {/* Amount Input */}
-          <Card className="bg-white/5 border-white/10 text-white">
+          <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="text-white">Deposit Amount</CardTitle>
               <CardDescription className="text-gray-300">
@@ -102,13 +102,13 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                     type="number"
                     value={totalAmount}
                     onChange={(e) => setTotalAmount(Number(e.target.value))}
-                    className="bg-white/10 border-white/20 text-white text-xl font-bold placeholder:text-gray-400"
+                    className="bg-white/10 border-white/20 text-white text-xl font-bold placeholder:text-gray-400 focus:border-blue-500"
                     placeholder="1000"
                   />
                 </div>
                 <Button 
                   onClick={distributeFunds}
-                  className="bg-blue-600 hover:bg-blue-700 mt-6 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 mt-6 text-white border-0"
                 >
                   Auto Distribute
                 </Button>
@@ -121,7 +121,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
 
           {/* Strategy Allocation */}
           {selectedStrategies.length > 0 && (
-            <Card className="bg-white/5 border-white/10 text-white">
+            <Card className="bg-white/5 border-white/10">
               <CardHeader>
                 <CardTitle className="text-white">Strategy Allocation</CardTitle>
                 <CardDescription className="text-gray-300">
@@ -141,7 +141,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                         type="number"
                         value={strategy.amount || 0}
                         onChange={(e) => updateStrategyAmount(strategy.id, Number(e.target.value))}
-                        className="w-32 bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                        className="w-32 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-blue-500"
                         placeholder="0"
                       />
                       <span className="text-sm text-gray-400">USDC</span>
@@ -149,7 +149,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                         variant="outline"
                         size="sm"
                         onClick={() => removeStrategy(strategy.id)}
-                        className="text-red-400 border-red-400 hover:bg-red-400/10"
+                        className="bg-transparent text-red-400 border-red-400 hover:bg-red-400/10 hover:text-red-300"
                       >
                         <Minus className="w-4 h-4" />
                       </Button>
@@ -176,7 +176,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
           )}
 
           {/* Transaction Summary */}
-          <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-blue-500/30 text-white">
+          <Card className="bg-gradient-to-r from-blue-600/20 to-purple-600/20 border-blue-500/30">
             <CardHeader>
               <CardTitle className="text-white">Transaction Summary</CardTitle>
             </CardHeader>
@@ -203,7 +203,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
               <Separator className="bg-white/20" />
               
               <Button 
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 h-12 text-lg font-semibold text-white"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 h-12 text-lg font-semibold text-white border-0"
                 disabled={totalAllocated === 0 || selectedStrategies.length === 0}
               >
                 Confirm Deposit
@@ -214,7 +214,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
         </TabsContent>
 
         <TabsContent value="withdraw" className="space-y-6">
-          <Card className="bg-white/5 border-white/10 text-white">
+          <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="text-white">Your Positions</CardTitle>
               <CardDescription className="text-gray-300">
@@ -232,10 +232,18 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                     <div className="text-sm text-green-400">{position.apy}% APY</div>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+                    >
                       Withdraw All
                     </Button>
-                    <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
+                    >
                       Partial
                     </Button>
                   </div>
@@ -246,7 +254,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
         </TabsContent>
 
         <TabsContent value="rebalance" className="space-y-6">
-          <Card className="bg-white/5 border-white/10 text-white">
+          <Card className="bg-white/5 border-white/10">
             <CardHeader>
               <CardTitle className="text-white">Rebalance Portfolio</CardTitle>
               <CardDescription className="text-gray-300">
@@ -258,7 +266,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                 <div className="text-gray-400 mb-4">
                   Rebalancing tools will automatically optimize your portfolio based on current yields and risk preferences.
                 </div>
-                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <Button className="bg-green-600 hover:bg-green-700 text-white border-0">
                   Auto-Rebalance
                 </Button>
               </div>

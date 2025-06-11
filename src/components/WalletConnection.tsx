@@ -1,10 +1,9 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Wallet, ChevronDown } from 'lucide-react';
+import { Wallet } from 'lucide-react';
 
 interface WalletConnectionProps {
   isConnected: boolean;
@@ -30,14 +29,14 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
   if (isConnected) {
     return (
       <div className="flex items-center space-x-4">
-        <Badge variant="outline" className="text-white border-white/20 bg-white/10">
+        <Badge className="bg-white/10 text-white border-white/20 hover:bg-white/20">
           <div className={`w-2 h-2 rounded-full ${selectedChain.color} mr-2`}></div>
           {selectedChain.name}
         </Badge>
         <Button 
           variant="outline" 
           onClick={onDisconnect}
-          className="text-white border-white/20 hover:bg-white/10 bg-white/5"
+          className="bg-white/5 text-white border-white/20 hover:bg-white/10 hover:text-white"
         >
           {walletAddress}
         </Button>
@@ -48,12 +47,12 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">
           <Wallet className="w-4 h-4 mr-2" />
           Connect Wallet
         </Button>
       </DialogTrigger>
-      <DialogContent className="bg-slate-900 border-white/10 text-white">
+      <DialogContent className="bg-slate-900 border-white/10">
         <DialogHeader>
           <DialogTitle className="text-white">Connect Your Wallet</DialogTitle>
           <DialogDescription className="text-gray-400">
@@ -68,10 +67,10 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
               {supportedChains.map((chain) => (
                 <Button
                   key={chain.id}
-                  variant={selectedChain.id === chain.id ? "default" : "outline"}
+                  variant="outline"
                   className={selectedChain.id === chain.id 
-                    ? "justify-start bg-blue-600 hover:bg-blue-700 text-white" 
-                    : "justify-start border-white/10 hover:bg-white/5 text-white"
+                    ? "justify-start bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
+                    : "justify-start bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white"
                   }
                   onClick={() => setSelectedChain(chain)}
                 >
@@ -87,7 +86,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
             <div className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start border-white/10 hover:bg-white/5 text-white"
+                className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white"
                 onClick={() => {
                   onConnect();
                 }}
@@ -102,7 +101,7 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
               
               <Button 
                 variant="outline" 
-                className="w-full justify-start border-white/10 hover:bg-white/5 text-white"
+                className="w-full justify-start bg-transparent border-white/20 text-white hover:bg-white/10 hover:text-white"
                 onClick={() => {
                   onConnect();
                 }}

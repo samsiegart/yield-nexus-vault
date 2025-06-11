@@ -52,7 +52,7 @@ const Index = () => {
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
-              <Card className="bg-white/5 border-white/10 text-white">
+              <Card className="bg-white/5 border-white/10">
                 <CardHeader className="text-center">
                   <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
                   <CardTitle className="text-white">Multi-Chain Support</CardTitle>
@@ -64,7 +64,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/5 border-white/10 text-white">
+              <Card className="bg-white/5 border-white/10">
                 <CardHeader className="text-center">
                   <TrendingUp className="w-8 h-8 text-green-400 mx-auto mb-2" />
                   <CardTitle className="text-white">Optimized Yields</CardTitle>
@@ -76,7 +76,7 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="bg-white/5 border-white/10 text-white">
+              <Card className="bg-white/5 border-white/10">
                 <CardHeader className="text-center">
                   <Zap className="w-8 h-8 text-purple-400 mx-auto mb-2" />
                   <CardTitle className="text-white">One-Click Actions</CardTitle>
@@ -101,8 +101,8 @@ const Index = () => {
                 variant={currentView === 'dashboard' ? 'default' : 'outline'}
                 onClick={() => setCurrentView('dashboard')}
                 className={currentView === 'dashboard' 
-                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
-                  : "border-white/20 text-white hover:bg-white/10"
+                  ? "bg-blue-600 hover:bg-blue-700 text-white border-0" 
+                  : "bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
                 }
               >
                 Strategies
@@ -111,8 +111,8 @@ const Index = () => {
                 variant={currentView === 'deposit' ? 'default' : 'outline'}
                 onClick={() => setCurrentView('deposit')}
                 className={currentView === 'deposit' 
-                  ? "bg-purple-600 hover:bg-purple-700 text-white" 
-                  : "border-white/20 text-white hover:bg-white/10"
+                  ? "bg-purple-600 hover:bg-purple-700 text-white border-0" 
+                  : "bg-transparent border-white/30 text-white hover:bg-white/10 hover:text-white"
                 }
               >
                 Manage Positions
