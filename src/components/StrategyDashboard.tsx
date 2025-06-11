@@ -142,7 +142,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                         <Icon className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-lg">{preset.name}</CardTitle>
+                        <CardTitle className="text-lg text-white">{preset.name}</CardTitle>
                         <CardDescription className="text-gray-300">
                           {preset.description}
                         </CardDescription>
@@ -157,7 +157,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
                     Deploy Strategy
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -177,7 +177,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               variant={filter === 'all' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter('all')}
-              className="text-white border-white/20"
+              className={filter === 'all' 
+                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                : "text-white border-white/20 hover:bg-white/10"
+              }
             >
               All
             </Button>
@@ -185,7 +188,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               variant={filter === 'low' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter('low')}
-              className="text-white border-white/20"
+              className={filter === 'low' 
+                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                : "text-white border-white/20 hover:bg-white/10"
+              }
             >
               Low Risk
             </Button>
@@ -193,7 +199,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               variant={filter === 'medium' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter('medium')}
-              className="text-white border-white/20"
+              className={filter === 'medium' 
+                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                : "text-white border-white/20 hover:bg-white/10"
+              }
             >
               Medium Risk
             </Button>
@@ -201,7 +210,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               variant={filter === 'high' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setFilter('high')}
-              className="text-white border-white/20"
+              className={filter === 'high' 
+                ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                : "text-white border-white/20 hover:bg-white/10"
+              }
             >
               High Risk
             </Button>
@@ -214,12 +226,12 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="text-lg">{strategy.protocol}</CardTitle>
+                    <CardTitle className="text-lg text-white">{strategy.protocol}</CardTitle>
                     <CardDescription className="text-gray-300">
                       {strategy.name}
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className="text-white border-white/20">
+                  <Badge variant="outline" className="text-white border-white/20 bg-white/10">
                     {strategy.chain}
                   </Badge>
                 </div>
@@ -233,7 +245,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                     <div className="text-sm text-gray-400">APY</div>
                   </div>
                   <div className="text-right">
-                    <div className="text-lg font-semibold">{strategy.tvl}</div>
+                    <div className="text-lg font-semibold text-white">{strategy.tvl}</div>
                     <div className="text-sm text-gray-400">TVL</div>
                   </div>
                 </div>
@@ -241,7 +253,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${getRiskColor(strategy.riskLevel)}`}></div>
-                    <span className="text-sm">{strategy.riskLevel} Risk</span>
+                    <span className="text-sm text-white">{strategy.riskLevel} Risk</span>
                   </div>
                   <div className="text-sm text-gray-400">
                     Min: ${strategy.minDeposit}
@@ -253,7 +265,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                 </p>
 
                 <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => onSelectStrategy(strategy)}
                 >
                   Select Strategy

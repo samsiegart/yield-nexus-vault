@@ -55,7 +55,7 @@ const Index = () => {
               <Card className="bg-white/5 border-white/10 text-white">
                 <CardHeader className="text-center">
                   <Shield className="w-8 h-8 text-blue-400 mx-auto mb-2" />
-                  <CardTitle>Multi-Chain Support</CardTitle>
+                  <CardTitle className="text-white">Multi-Chain Support</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-300">
@@ -67,7 +67,7 @@ const Index = () => {
               <Card className="bg-white/5 border-white/10 text-white">
                 <CardHeader className="text-center">
                   <TrendingUp className="w-8 h-8 text-green-400 mx-auto mb-2" />
-                  <CardTitle>Optimized Yields</CardTitle>
+                  <CardTitle className="text-white">Optimized Yields</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-300">
@@ -79,7 +79,7 @@ const Index = () => {
               <Card className="bg-white/5 border-white/10 text-white">
                 <CardHeader className="text-center">
                   <Zap className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-                  <CardTitle>One-Click Actions</CardTitle>
+                  <CardTitle className="text-white">One-Click Actions</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-300">
@@ -100,14 +100,20 @@ const Index = () => {
               <Button 
                 variant={currentView === 'dashboard' ? 'default' : 'outline'}
                 onClick={() => setCurrentView('dashboard')}
-                className="bg-blue-600 hover:bg-blue-700"
+                className={currentView === 'dashboard' 
+                  ? "bg-blue-600 hover:bg-blue-700 text-white" 
+                  : "border-white/20 text-white hover:bg-white/10"
+                }
               >
                 Strategies
               </Button>
               <Button 
                 variant={currentView === 'deposit' ? 'default' : 'outline'}
                 onClick={() => setCurrentView('deposit')}
-                className="bg-purple-600 hover:bg-purple-700"
+                className={currentView === 'deposit' 
+                  ? "bg-purple-600 hover:bg-purple-700 text-white" 
+                  : "border-white/20 text-white hover:bg-white/10"
+                }
               >
                 Manage Positions
               </Button>

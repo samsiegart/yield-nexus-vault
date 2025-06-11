@@ -30,14 +30,14 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
   if (isConnected) {
     return (
       <div className="flex items-center space-x-4">
-        <Badge variant="outline" className="text-white border-white/20">
+        <Badge variant="outline" className="text-white border-white/20 bg-white/10">
           <div className={`w-2 h-2 rounded-full ${selectedChain.color} mr-2`}></div>
           {selectedChain.name}
         </Badge>
         <Button 
           variant="outline" 
           onClick={onDisconnect}
-          className="text-white border-white/20 hover:bg-white/10"
+          className="text-white border-white/20 hover:bg-white/10 bg-white/5"
         >
           {walletAddress}
         </Button>
@@ -48,14 +48,14 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
           <Wallet className="w-4 h-4 mr-2" />
           Connect Wallet
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-slate-900 border-white/10 text-white">
         <DialogHeader>
-          <DialogTitle>Connect Your Wallet</DialogTitle>
+          <DialogTitle className="text-white">Connect Your Wallet</DialogTitle>
           <DialogDescription className="text-gray-400">
             Choose your preferred wallet and network
           </DialogDescription>
@@ -63,13 +63,16 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
         
         <div className="space-y-4">
           <div>
-            <h3 className="text-sm font-medium mb-3">Select Network</h3>
+            <h3 className="text-sm font-medium mb-3 text-white">Select Network</h3>
             <div className="grid grid-cols-2 gap-2">
               {supportedChains.map((chain) => (
                 <Button
                   key={chain.id}
                   variant={selectedChain.id === chain.id ? "default" : "outline"}
-                  className="justify-start"
+                  className={selectedChain.id === chain.id 
+                    ? "justify-start bg-blue-600 hover:bg-blue-700 text-white" 
+                    : "justify-start border-white/10 hover:bg-white/5 text-white"
+                  }
                   onClick={() => setSelectedChain(chain)}
                 >
                   <div className={`w-3 h-3 rounded-full ${chain.color} mr-2`}></div>
@@ -80,11 +83,11 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
           </div>
 
           <div>
-            <h3 className="text-sm font-medium mb-3">Select Wallet</h3>
+            <h3 className="text-sm font-medium mb-3 text-white">Select Wallet</h3>
             <div className="space-y-2">
               <Button 
                 variant="outline" 
-                className="w-full justify-start border-white/10 hover:bg-white/5"
+                className="w-full justify-start border-white/10 hover:bg-white/5 text-white"
                 onClick={() => {
                   onConnect();
                 }}
@@ -99,12 +102,12 @@ const WalletConnection: React.FC<WalletConnectionProps> = ({ isConnected, onConn
               
               <Button 
                 variant="outline" 
-                className="w-full justify-start border-white/10 hover:bg-white/5"
+                className="w-full justify-start border-white/10 hover:bg-white/5 text-white"
                 onClick={() => {
                   onConnect();
                 }}
               >
-                <div className="w-6 h-6 mr-3 bg-gradient-to-r from-blue-400 to-purple-500 rounded flex items-center justify-center text-xs font-bold">
+                <div className="w-6 h-6 mr-3 bg-gradient-to-r from-blue-400 to-purple-500 rounded flex items-center justify-center text-xs font-bold text-white">
                   K
                 </div>
                 Keplr Wallet
