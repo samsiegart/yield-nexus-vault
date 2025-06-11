@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import WalletConnection from '@/components/WalletConnection';
 import StrategyDashboard from '@/components/StrategyDashboard';
 import DepositInterface from '@/components/DepositInterface';
+import PerformanceView from '@/components/PerformanceView';
 import { Wallet, TrendingUp, Shield, Zap } from 'lucide-react';
 
 const Index = () => {
@@ -58,6 +59,16 @@ const Index = () => {
           >
             Manage Positions
           </Button>
+          <Button 
+            variant={currentView === 'performance' ? 'default' : 'outline'}
+            onClick={() => setCurrentView('performance')}
+            className={currentView === 'performance' 
+              ? "bg-green-600 hover:bg-green-700 text-white border-0" 
+              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+            }
+          >
+            Performance
+          </Button>
         </div>
 
         {/* Content */}
@@ -65,6 +76,10 @@ const Index = () => {
           <StrategyDashboard 
             onSelectStrategy={(strategy) => {
               setSelectedStrategies([...selectedStrategies, strategy]);
+              setCurrentView('deposit');
+            }}
+            onSelectPresetStrategies={(strategies) => {
+              setSelectedStrategies(strategies);
               setCurrentView('deposit');
             }}
             walletConnected={walletConnected}
@@ -75,6 +90,13 @@ const Index = () => {
           <DepositInterface 
             selectedStrategies={selectedStrategies}
             onUpdateStrategies={setSelectedStrategies}
+            walletConnected={walletConnected}
+            onConnectWallet={() => setWalletConnected(true)}
+          />
+        )}
+
+        {currentView === 'performance' && (
+          <PerformanceView 
             walletConnected={walletConnected}
             onConnectWallet={() => setWalletConnected(true)}
           />

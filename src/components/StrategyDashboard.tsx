@@ -107,10 +107,15 @@ const presetStrategies = [
 
 interface StrategyDashboardProps {
   onSelectStrategy: (strategy: Strategy) => void;
+  onSelectPresetStrategies: (strategies: Strategy[]) => void;
   walletConnected: boolean;
 }
 
-const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy, walletConnected }) => {
+const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ 
+  onSelectStrategy, 
+  onSelectPresetStrategies,
+  walletConnected 
+}) => {
   const [filter, setFilter] = useState('all');
 
   const getRiskColor = (risk: string) => {
@@ -125,6 +130,16 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy,
   const filteredStrategies = filter === 'all' 
     ? strategies 
     : strategies.filter(s => s.riskLevel.toLowerCase() === filter);
+
+  const handlePresetStrategyDeploy = (presetId: string) => {
+    const preset = presetStrategies.find(p => p.id === presetId);
+    if (preset) {
+      const presetStrategiesData = strategies.filter(s => 
+        preset.strategies.includes(s.id)
+      );
+      onSelectPresetStrategies(presetStrategiesData);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -158,7 +173,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy,
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">
+                  <Button 
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+                    onClick={() => handlePresetStrategyDeploy(preset.id)}
+                  >
                     Deploy Strategy
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>

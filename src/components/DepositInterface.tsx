@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowRight, Minus, Plus, Clock, Zap, Wallet } from 'lucide-react';
+import { ArrowRight, Minus, Plus, Clock, Zap, Wallet, TrendingUp, Shield } from 'lucide-react';
 
 interface Strategy {
   id: string;
@@ -47,6 +46,25 @@ const allStrategies = [
   { id: 'notion-base', protocol: 'Notion', name: 'USDC Liquidity Pool', apy: 8.9, chain: 'Base' },
 ];
 
+const presetStrategies = [
+  {
+    id: 'max-yield',
+    name: 'Max Yield Portfolio',
+    description: 'Highest APY strategies with balanced risk',
+    strategies: ['notion-base', 'beefy-polygon', 'yearn-eth'],
+    estimatedApy: 7.7,
+    icon: TrendingUp
+  },
+  {
+    id: 'safe-lp',
+    name: 'Safe LP Portfolio',
+    description: 'Conservative strategies with stable returns',
+    strategies: ['aave-eth', 'compound-eth', 'radiant-arbitrum'],
+    estimatedApy: 4.5,
+    icon: Shield
+  }
+];
+
 const DepositInterface: React.FC<DepositInterfaceProps> = ({ 
   selectedStrategies, 
   onUpdateStrategies,
@@ -74,6 +92,22 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const addStrategy = (strategy: Strategy) => {
     const newStrategy = { ...strategy, amount: 0 };
     onUpdateStrategies([...selectedStrategies, newStrategy]);
+  };
+
+  const addPresetStrategies = (presetId: string) => {
+    const preset = presetStrategies.find(p => p.id === presetId);
+    if (preset) {
+      const presetStrategiesData = allStrategies.filter(s => 
+        preset.strategies.includes(s.id)
+      ).map(s => ({ ...s, amount: 0 }));
+      
+      // Add strategies that aren't already selected
+      const newStrategies = presetStrategiesData.filter(ps => 
+        !selectedStrategies.find(ss => ss.id === ps.id)
+      );
+      
+      onUpdateStrategies([...selectedStrategies, ...newStrategies]);
+    }
   };
 
   const totalAllocated = selectedStrategies.reduce((sum, s) => sum + (s.amount || 0), 0);
@@ -133,9 +167,9 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
               {/* Chain Selection */}
               <Card className="bg-slate-800/40 border-slate-600">
                 <CardHeader>
-                  <CardTitle className="text-white">Select Chain</CardTitle>
+                  <CardTitle className="text-white">Select Funding Chain</CardTitle>
                   <CardDescription className="text-slate-300">
-                    Choose which blockchain to deploy your strategies on
+                    Choose which chain your USDC is on for funding these strategies
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -171,27 +205,67 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           Add Strategy
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-slate-900 border-slate-700">
+                      <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
                         <DialogHeader>
                           <DialogTitle className="text-white">Add Strategy</DialogTitle>
                           <DialogDescription className="text-slate-400">
-                            Choose a strategy to add to your allocation
+                            Choose individual strategies or preset portfolios
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-2">
-                          {availableStrategies.map((strategy) => (
-                            <Button
-                              key={strategy.id}
-                              variant="outline"
-                              className="w-full justify-start bg-slate-800 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
-                              onClick={() => addStrategy(strategy)}
-                            >
-                              <div className="text-left">
-                                <div className="font-medium">{strategy.protocol}</div>
-                                <div className="text-sm text-slate-400">{strategy.name} • {strategy.chain} • {strategy.apy}% APY</div>
-                              </div>
-                            </Button>
-                          ))}
+                        
+                        <div className="space-y-6">
+                          {/* Preset Strategies */}
+                          <div>
+                            <h4 className="text-white font-medium mb-3">Preset Portfolios</h4>
+                            <div className="space-y-2">
+                              {presetStrategies.map((preset) => {
+                                const Icon = preset.icon;
+                                return (
+                                  <Button
+                                    key={preset.id}
+                                    variant="outline"
+                                    className="w-full justify-start bg-slate-800 border-slate-600 text-white hover:bg-slate-700 hover:text-white p-4 h-auto"
+                                    onClick={() => addPresetStrategies(preset.id)}
+                                  >
+                                    <div className="flex items-center space-x-3 w-full">
+                                      <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                        <Icon className="w-4 h-4 text-white" />
+                                      </div>
+                                      <div className="text-left flex-1">
+                                        <div className="font-medium">{preset.name}</div>
+                                        <div className="text-sm text-slate-400">{preset.description}</div>
+                                      </div>
+                                      <div className="text-green-400 font-medium">
+                                        {preset.estimatedApy}% APY
+                                      </div>
+                                    </div>
+                                  </Button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <Separator className="bg-slate-600" />
+
+                          {/* Individual Strategies */}
+                          <div>
+                            <h4 className="text-white font-medium mb-3">Individual Strategies</h4>
+                            <div className="space-y-2 max-h-64 overflow-y-auto">
+                              {availableStrategies.map((strategy) => (
+                                <Button
+                                  key={strategy.id}
+                                  variant="outline"
+                                  className="w-full justify-start bg-slate-800 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+                                  onClick={() => addStrategy(strategy)}
+                                >
+                                  <div className="text-left">
+                                    <div className="font-medium">{strategy.protocol}</div>
+                                    <div className="text-sm text-slate-400">{strategy.name} • {strategy.chain} • {strategy.apy}% APY</div>
+                                  </div>
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </DialogContent>
                     </Dialog>
