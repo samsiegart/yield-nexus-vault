@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,9 +107,10 @@ const presetStrategies = [
 
 interface StrategyDashboardProps {
   onSelectStrategy: (strategy: Strategy) => void;
+  walletConnected: boolean;
 }
 
-const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy }) => {
+const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy, walletConnected }) => {
   const [filter, setFilter] = useState('all');
 
   const getRiskColor = (risk: string) => {
@@ -133,7 +135,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
           {presetStrategies.map((preset) => {
             const Icon = preset.icon;
             return (
-              <Card key={preset.id} className="bg-gradient-to-br from-white/10 to-white/5 border-white/20 hover:from-white/15 hover:to-white/10 transition-all cursor-pointer">
+              <Card key={preset.id} className="bg-slate-800/60 border-slate-600 hover:bg-slate-700/60 transition-all cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -142,7 +144,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                       </div>
                       <div>
                         <CardTitle className="text-lg text-white">{preset.name}</CardTitle>
-                        <CardDescription className="text-gray-300">
+                        <CardDescription className="text-slate-300">
                           {preset.description}
                         </CardDescription>
                       </div>
@@ -151,7 +153,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                       <div className="text-2xl font-bold text-green-400">
                         {preset.estimatedApy}%
                       </div>
-                      <div className="text-sm text-gray-400">Est. APY</div>
+                      <div className="text-sm text-slate-400">Est. APY</div>
                     </div>
                   </div>
                 </CardHeader>
@@ -178,7 +180,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               onClick={() => setFilter('all')}
               className={filter === 'all' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
               }
             >
               All
@@ -189,7 +191,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               onClick={() => setFilter('low')}
               className={filter === 'low' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
               }
             >
               Low Risk
@@ -200,7 +202,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               onClick={() => setFilter('medium')}
               className={filter === 'medium' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
               }
             >
               Medium Risk
@@ -211,7 +213,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
               onClick={() => setFilter('high')}
               className={filter === 'high' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-transparent text-white border-white/30 hover:bg-white/10 hover:text-white"
+                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
               }
             >
               High Risk
@@ -221,16 +223,16 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
 
         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredStrategies.map((strategy) => (
-            <Card key={strategy.id} className="bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer">
+            <Card key={strategy.id} className="bg-slate-800/40 border-slate-600 hover:bg-slate-700/60 transition-all cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
                     <CardTitle className="text-lg text-white">{strategy.protocol}</CardTitle>
-                    <CardDescription className="text-gray-300">
+                    <CardDescription className="text-slate-300">
                       {strategy.name}
                     </CardDescription>
                   </div>
-                  <Badge className="bg-white/10 text-white border-white/20">
+                  <Badge className="bg-slate-700 text-slate-200 border-slate-600">
                     {strategy.chain}
                   </Badge>
                 </div>
@@ -241,11 +243,11 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                     <div className="text-2xl font-bold text-green-400">
                       {strategy.apy}%
                     </div>
-                    <div className="text-sm text-gray-400">APY</div>
+                    <div className="text-sm text-slate-400">APY</div>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-semibold text-white">{strategy.tvl}</div>
-                    <div className="text-sm text-gray-400">TVL</div>
+                    <div className="text-sm text-slate-400">TVL</div>
                   </div>
                 </div>
 
@@ -254,12 +256,12 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ onSelectStrategy 
                     <div className={`w-3 h-3 rounded-full ${getRiskColor(strategy.riskLevel)}`}></div>
                     <span className="text-sm text-white">{strategy.riskLevel} Risk</span>
                   </div>
-                  <div className="text-sm text-gray-400">
+                  <div className="text-sm text-slate-400">
                     Min: ${strategy.minDeposit}
                   </div>
                 </div>
 
-                <p className="text-sm text-gray-300">
+                <p className="text-sm text-slate-300">
                   {strategy.description}
                 </p>
 
