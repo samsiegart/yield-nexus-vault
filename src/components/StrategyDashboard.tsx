@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { TrendingUp, Shield, Zap, ArrowRight, Wallet, Plus } from 'lucide-react';
+import { ArrowRight, Wallet, TrendingUp } from 'lucide-react';
 
 interface Strategy {
   id: string;
@@ -22,8 +21,8 @@ const strategies: Strategy[] = [
   {
     id: 'aave-eth',
     protocol: 'Aave',
-    name: 'USDC Lending',
-    apy: 4.2,
+    name: 'Vault USDC',
+    apy: 4.6,
     tvl: '$2.1B',
     riskLevel: 'Low',
     chain: 'Ethereum',
@@ -34,7 +33,7 @@ const strategies: Strategy[] = [
     id: 'compound-eth',
     protocol: 'Compound',
     name: 'USDC Supply',
-    apy: 3.8,
+    apy: 8.1,
     tvl: '$890M',
     riskLevel: 'Low',
     chain: 'Ethereum',
@@ -45,7 +44,7 @@ const strategies: Strategy[] = [
     id: 'yearn-eth',
     protocol: 'Yearn v3',
     name: 'USDC Vault',
-    apy: 6.5,
+    apy: 6.3,
     tvl: '$450M',
     riskLevel: 'Medium',
     chain: 'Ethereum',
@@ -55,7 +54,7 @@ const strategies: Strategy[] = [
   {
     id: 'beefy-polygon',
     protocol: 'Beefy',
-    name: 'USDC Auto-Compound',
+    name: 'Auto-Compound',
     apy: 7.8,
     tvl: '$120M',
     riskLevel: 'Medium',
@@ -65,7 +64,7 @@ const strategies: Strategy[] = [
   },
   {
     id: 'radiant-arbitrum',
-    protocol: 'Radiant Capital',
+    protocol: 'Radiant',
     name: 'USDC Lending',
     apy: 5.4,
     tvl: '$380M',
@@ -76,14 +75,25 @@ const strategies: Strategy[] = [
   },
   {
     id: 'notion-base',
-    protocol: 'Notion',
-    name: 'USDC Liquidity Pool',
+    protocol: 'Notional',
+    name: 'Liquidity Pool',
     apy: 8.9,
     tvl: '$95M',
     riskLevel: 'High',
     chain: 'Base',
     description: 'High-yield liquidity provision on Base',
     minDeposit: 500
+  },
+  {
+    id: 'noble-usav',
+    protocol: 'Noble',
+    name: 'USAV',
+    apy: 14.0,
+    tvl: '$25M',
+    riskLevel: 'High',
+    chain: 'Noble',
+    description: 'High-yield staking on Noble',
+    minDeposit: 100
   }
 ];
 
@@ -100,15 +110,11 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   walletConnected,
   onNavigateToDeposit
 }) => {
-  const [filter, setFilter] = useState('all');
   const [currentPositions] = useState([
-    { id: 'aave-eth', protocol: 'Aave', name: 'USDC Lending', amount: 2500, value: 2563.50, apy: 4.2, chain: 'Ethereum' },
-    { id: 'yearn-eth', protocol: 'Yearn v3', name: 'USDC Vault', amount: 1800, value: 1847.20, apy: 6.5, chain: 'Ethereum' }
+    { id: 'aave-eth', protocol: 'AAVE', name: 'USAV', spread: 30, apy: 14.0, chain: 'Ethereum' },
+    { id: 'beefy-polygon', protocol: 'Beefy', name: 'USDC', spread: 0, apy: 10.0, chain: 'Polygon' },
+    { id: 'compound-eth', protocol: 'Compound', name: '', spread: 40, apy: 4.0, chain: 'Ethereum' }
   ]);
-
-  const filteredStrategies = filter === 'all' 
-    ? strategies 
-    : strategies.filter(s => s.riskLevel.toLowerCase() === filter);
 
   const WalletConnectPrompt = () => (
     <Card className="bg-slate-800/60 border-slate-700">
@@ -128,78 +134,68 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
   return (
     <div className="space-y-8">
-      {/* Individual Strategies */}
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Strategies</h2>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setFilter('all')}
-              className={filter === 'all' 
-                ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
-              }
-            >
-              All
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setFilter('low')}
-              className={filter === 'low' 
-                ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
-              }
-            >
-              Low Risk
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setFilter('medium')}
-              className={filter === 'medium' 
-                ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
-              }
-            >
-              Medium Risk
-            </Button>
-            <Button 
-              variant="outline"
-              size="sm"
-              onClick={() => setFilter('high')}
-              className={filter === 'high' 
-                ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
-              }
-            >
-              High Risk
-            </Button>
-          </div>
+      {/* Portfolio Balance Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Portfolio Card */}
+        <div className="lg:col-span-2">
+          <Card className="bg-slate-800/60 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Your Portfolio Balance</CardTitle>
+              <div className="text-3xl font-bold text-white">$144,789</div>
+              <div className="text-green-400">+7.7% WoW</div>
+            </CardHeader>
+            <CardContent>
+              {/* Simple line chart placeholder */}
+              <div className="h-32 bg-slate-700/30 rounded-lg flex items-center justify-center">
+                <TrendingUp className="w-8 h-8 text-slate-400" />
+              </div>
+              <div className="flex justify-between mt-4 text-sm text-slate-400">
+                <span>D</span>
+                <span>W</span>
+                <span>M</span>
+                <span>All</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="space-y-3">
-          {filteredStrategies.map((strategy) => (
+        {/* Wallet Options */}
+        <div>
+          <Card className="bg-slate-800/60 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white text-lg">From Your Wallets</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
+                Meta Mask
+              </Button>
+              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
+                Keplr
+              </Button>
+              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
+                Phantom
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Yield Opportunities */}
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">Yield Opportunities</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {strategies.map((strategy) => (
             <Card key={strategy.id} className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer">
               <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div>
-                      <div className="text-lg font-semibold text-white">{strategy.protocol}</div>
-                      <div className="text-sm text-slate-300">{strategy.name}</div>
-                    </div>
-                    <Badge className="bg-slate-700/50 text-slate-200 border-slate-600">
-                      {strategy.chain}
-                    </Badge>
+                <div className="text-center">
+                  <div className="text-lg font-semibold text-white">{strategy.protocol}</div>
+                  <div className="text-sm text-slate-300">{strategy.name}</div>
+                  <div className="text-2xl font-bold text-green-400 mt-2">
+                    {strategy.apy}%
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-green-400">
-                      {strategy.apy}%
-                    </div>
-                    <div className="text-xs text-slate-400">APY</div>
-                  </div>
+                  <div className="text-xs text-slate-400">APY</div>
+                  <div className="text-xs text-slate-400 mt-1">{strategy.riskLevel}</div>
                 </div>
               </CardContent>
             </Card>
@@ -207,36 +203,37 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
         </div>
       </div>
 
-      {/* Your Positions */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Your Positions</h2>
-        
-        {!walletConnected ? (
-          <WalletConnectPrompt />
-        ) : (
+      {/* AI Chat Section */}
+      <Card className="bg-slate-800/60 border-slate-700">
+        <CardContent className="p-6">
+          <h3 className="text-xl font-bold text-white mb-4">Choosing yield?</h3>
+          <div className="bg-slate-700/30 rounded-lg p-4 mb-4">
+            <p className="text-slate-300 text-sm">Ask me anything about yield strategies, risk assessment, or portfolio optimization...</p>
+          </div>
+          <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+            Start Conversation
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Distribution (Your Positions) */}
+      {walletConnected && (
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-6">Distribution</h2>
+          
           <Card className="bg-slate-800/60 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Active Positions</CardTitle>
-              <CardDescription className="text-slate-300">
-                Your current yield farming positions
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               {currentPositions.map((position) => (
                 <div key={position.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
-                  <div>
-                    <div className="font-medium text-white">{position.protocol}</div>
-                    <div className="text-sm text-slate-400">{position.name} • {position.chain}</div>
-                    <div className="text-sm text-green-400">{position.apy}% APY</div>
+                  <div className="flex-1">
+                    <div className="font-medium text-white">{position.protocol} {position.name}</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold text-white">${position.value.toFixed(2)}</div>
-                    <div className="text-sm text-slate-400">
-                      Deposited: ${position.amount}
-                    </div>
-                    <div className="text-sm text-green-400">
-                      +${(position.value - position.amount).toFixed(2)}
-                    </div>
+                  <div className="flex items-center space-x-6 text-sm">
+                    <div className="text-slate-300">{position.spread}%</div>
+                    <div className="text-green-400">{position.apy}%</div>
+                    <Button size="sm" variant="outline" className="bg-slate-600/50 border-slate-500 text-white hover:bg-slate-500/50">
+                      Edit...
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -252,8 +249,8 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               </div>
             </CardContent>
           </Card>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
