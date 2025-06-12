@@ -57,7 +57,7 @@ const Index = () => {
               : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
-            Deposit
+            Manage Positions
           </Button>
           <Button 
             variant={currentView === 'performance' ? 'default' : 'outline'}
@@ -83,6 +83,7 @@ const Index = () => {
               setCurrentView('deposit');
             }}
             walletConnected={walletConnected}
+            onNavigateToDeposit={() => setCurrentView('deposit')}
           />
         )}
 
