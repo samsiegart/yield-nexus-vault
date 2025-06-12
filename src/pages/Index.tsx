@@ -44,7 +44,7 @@ const Index = () => {
             onClick={() => setCurrentView('dashboard')}
             className={currentView === 'dashboard' 
               ? "bg-blue-600 hover:bg-blue-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
             Strategies
@@ -54,17 +54,17 @@ const Index = () => {
             onClick={() => setCurrentView('deposit')}
             className={currentView === 'deposit' 
               ? "bg-purple-600 hover:bg-purple-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
-            Manage Positions
+            Deposit
           </Button>
           <Button 
             variant={currentView === 'performance' ? 'default' : 'outline'}
             onClick={() => setCurrentView('performance')}
             className={currentView === 'performance' 
               ? "bg-green-600 hover:bg-green-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
             Performance

@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Shield, Zap, ArrowRight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TrendingUp, Shield, Zap, ArrowRight, Wallet } from 'lucide-react';
 
 interface Strategy {
   id: string;
@@ -86,25 +87,6 @@ const strategies: Strategy[] = [
   }
 ];
 
-const presetStrategies = [
-  {
-    id: 'max-yield',
-    name: 'Max Yield',
-    description: 'Highest APY strategies with balanced risk',
-    strategies: ['notion-base', 'beefy-polygon', 'yearn-eth'],
-    estimatedApy: 7.7,
-    icon: TrendingUp
-  },
-  {
-    id: 'safe-lp',
-    name: 'Safe LP',
-    description: 'Conservative strategies with stable returns',
-    strategies: ['aave-eth', 'compound-eth', 'radiant-arbitrum'],
-    estimatedApy: 4.5,
-    icon: Shield
-  }
-];
-
 interface StrategyDashboardProps {
   onSelectStrategy: (strategy: Strategy) => void;
   onSelectPresetStrategies: (strategies: Strategy[]) => void;
@@ -117,6 +99,10 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   walletConnected 
 }) => {
   const [filter, setFilter] = useState('all');
+  const [currentPositions] = useState([
+    { id: 'aave-eth', protocol: 'Aave', name: 'USDC Lending', amount: 2500, value: 2563.50, apy: 4.2, chain: 'Ethereum' },
+    { id: 'yearn-eth', protocol: 'Yearn v3', name: 'USDC Vault', amount: 1800, value: 1847.20, apy: 6.5, chain: 'Ethereum' }
+  ]);
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
@@ -131,66 +117,28 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
     ? strategies 
     : strategies.filter(s => s.riskLevel.toLowerCase() === filter);
 
-  const handlePresetStrategyDeploy = (presetId: string) => {
-    const preset = presetStrategies.find(p => p.id === presetId);
-    if (preset) {
-      const presetStrategiesData = strategies.filter(s => 
-        preset.strategies.includes(s.id)
-      );
-      onSelectPresetStrategies(presetStrategiesData);
-    }
-  };
+  const WalletConnectPrompt = () => (
+    <Card className="bg-slate-800/60 border-slate-700">
+      <CardContent className="text-center py-12">
+        <Wallet className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-white mb-2">Connect Your Wallet</h3>
+        <p className="text-slate-300 mb-6">Connect your wallet to view and manage your positions</p>
+        <Button 
+          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+        >
+          <Wallet className="w-4 h-4 mr-2" />
+          Connect Wallet
+        </Button>
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-8">
-      {/* Preset Strategies */}
-      <div>
-        <h2 className="text-2xl font-bold text-white mb-4">Preset Strategies</h2>
-        <div className="grid md:grid-cols-2 gap-4">
-          {presetStrategies.map((preset) => {
-            const Icon = preset.icon;
-            return (
-              <Card key={preset.id} className="bg-slate-800/60 border-slate-600 hover:bg-slate-700/60 transition-all cursor-pointer">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <CardTitle className="text-lg text-white">{preset.name}</CardTitle>
-                        <CardDescription className="text-slate-300">
-                          {preset.description}
-                        </CardDescription>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-green-400">
-                        {preset.estimatedApy}%
-                      </div>
-                      <div className="text-sm text-slate-400">Est. APY</div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <Button 
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-                    onClick={() => handlePresetStrategyDeploy(preset.id)}
-                  >
-                    Deploy Strategy
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Individual Strategies */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">Individual Strategies</h2>
+          <h2 className="text-2xl font-bold text-white">Strategies</h2>
           <div className="flex space-x-2">
             <Button 
               variant="outline"
@@ -198,7 +146,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               onClick={() => setFilter('all')}
               className={filter === 'all' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
+                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
               }
             >
               All
@@ -209,7 +157,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               onClick={() => setFilter('low')}
               className={filter === 'low' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
+                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
               }
             >
               Low Risk
@@ -220,7 +168,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               onClick={() => setFilter('medium')}
               className={filter === 'medium' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
+                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
               }
             >
               Medium Risk
@@ -231,7 +179,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               onClick={() => setFilter('high')}
               className={filter === 'high' 
                 ? "bg-blue-600 hover:bg-blue-700 text-white border-blue-500" 
-                : "bg-slate-800 text-slate-200 border-slate-600 hover:bg-slate-700 hover:text-white"
+                : "bg-slate-800/50 text-slate-200 border-slate-600 hover:bg-slate-700/50 hover:text-white"
               }
             >
               High Risk
@@ -241,7 +189,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
         <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredStrategies.map((strategy) => (
-            <Card key={strategy.id} className="bg-slate-800/40 border-slate-600 hover:bg-slate-700/60 transition-all cursor-pointer">
+            <Card key={strategy.id} className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
@@ -250,7 +198,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                       {strategy.name}
                     </CardDescription>
                   </div>
-                  <Badge className="bg-slate-700 text-slate-200 border-slate-600">
+                  <Badge className="bg-slate-700/50 text-slate-200 border-slate-600">
                     {strategy.chain}
                   </Badge>
                 </div>
@@ -263,25 +211,11 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                     </div>
                     <div className="text-sm text-slate-400">APY</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold text-white">{strategy.tvl}</div>
-                    <div className="text-sm text-slate-400">TVL</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className={`w-3 h-3 rounded-full ${getRiskColor(strategy.riskLevel)}`}></div>
                     <span className="text-sm text-white">{strategy.riskLevel} Risk</span>
                   </div>
-                  <div className="text-sm text-slate-400">
-                    Min: ${strategy.minDeposit}
-                  </div>
                 </div>
-
-                <p className="text-sm text-slate-300">
-                  {strategy.description}
-                </p>
 
                 <Button 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
@@ -293,6 +227,130 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
             </Card>
           ))}
         </div>
+      </div>
+
+      {/* Manage Positions */}
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">Your Positions</h2>
+        
+        {!walletConnected ? (
+          <WalletConnectPrompt />
+        ) : (
+          <Tabs defaultValue="positions" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 bg-slate-800/50 border-slate-700">
+              <TabsTrigger 
+                value="positions" 
+                className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 border-0"
+              >
+                Active Positions
+              </TabsTrigger>
+              <TabsTrigger 
+                value="withdraw" 
+                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-slate-300 border-0"
+              >
+                Withdraw
+              </TabsTrigger>
+              <TabsTrigger 
+                value="rebalance" 
+                className="data-[state=active]:bg-green-600 data-[state=active]:text-white text-slate-300 border-0"
+              >
+                Rebalance
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="positions" className="space-y-4">
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Active Positions</CardTitle>
+                  <CardDescription className="text-slate-300">
+                    Your current yield farming positions
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentPositions.map((position) => (
+                    <div key={position.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div>
+                        <div className="font-medium text-white">{position.protocol}</div>
+                        <div className="text-sm text-slate-400">{position.name} • {position.chain}</div>
+                        <div className="text-sm text-green-400">{position.apy}% APY</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-white">${position.value.toFixed(2)}</div>
+                        <div className="text-sm text-slate-400">
+                          Deposited: ${position.amount}
+                        </div>
+                        <div className="text-sm text-green-400">
+                          +${(position.value - position.amount).toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="withdraw" className="space-y-4">
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Withdraw Funds</CardTitle>
+                  <CardDescription className="text-slate-300">
+                    Select positions to withdraw from
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentPositions.map((position) => (
+                    <div key={position.id} className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg">
+                      <div>
+                        <div className="font-medium text-white">{position.protocol}</div>
+                        <div className="text-sm text-slate-400">
+                          Available: ${position.value.toFixed(2)}
+                        </div>
+                        <div className="text-sm text-green-400">{position.apy}% APY</div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50 hover:text-white"
+                        >
+                          Withdraw All
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50 hover:text-white"
+                        >
+                          Partial
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="rebalance" className="space-y-4">
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Rebalance Portfolio</CardTitle>
+                  <CardDescription className="text-slate-300">
+                    Optimize your allocation across strategies
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <div className="text-slate-400 mb-4">
+                      Rebalancing tools will automatically optimize your portfolio based on current yields and risk preferences.
+                    </div>
+                    <Button className="bg-green-600 hover:bg-green-700 text-white border-0">
+                      Auto-Rebalance
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
