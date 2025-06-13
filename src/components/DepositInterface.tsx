@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ArrowRight, Minus, Plus, Clock, Zap, Wallet } from 'lucide-react';
+import { ArrowRight, Minus, Plus, Clock, Zap, Wallet, X } from 'lucide-react';
 
 interface Strategy {
   id: string;
@@ -60,6 +59,9 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
 }) => {
   const [selectedChain, setSelectedChain] = useState('1');
   const [withdrawAmounts, setWithdrawAmounts] = useState<{[key: string]: number}>({});
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [rebalanceAmounts, setRebalanceAmounts] = useState<{[key: string]: number}>({});
+  const [rebalanceMode, setRebalanceMode] = useState<'dollar' | 'percentage'>('dollar');
 
   const updateStrategyAmount = (strategyId: string, amount: number) => {
     const updated = selectedStrategies.map(s => 
@@ -76,6 +78,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const addStrategy = (strategy: Strategy) => {
     const newStrategy = { ...strategy, amount: 0 };
     onUpdateStrategies([...selectedStrategies, newStrategy]);
+    setShowAddDialog(false); // Auto-dismiss the dialog
   };
 
   const updateWithdrawAmount = (positionId: string, amount: number) => {
@@ -85,8 +88,16 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
     }));
   };
 
+  const updateRebalanceAmount = (positionId: string, amount: number) => {
+    setRebalanceAmounts(prev => ({
+      ...prev,
+      [positionId]: amount
+    }));
+  };
+
   const totalAllocated = selectedStrategies.reduce((sum, s) => sum + (s.amount || 0), 0);
   const totalWithdrawing = Object.values(withdrawAmounts).reduce((sum, amount) => sum + amount, 0);
+  const totalRebalancing = Object.values(rebalanceAmounts).reduce((sum, amount) => sum + amount, 0);
   const estimatedGas = 0.0045; // ETH
   const estimatedTime = "2-5 min";
 
@@ -117,9 +128,12 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
         <WalletConnectPrompt />
       ) : (
         <Tabs defaultValue="deposit" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 bg-slate-800/60 border-slate-700">
+          <TabsList className="grid w-full grid-cols-3 bg-slate-800/60 border-slate-700">
             <TabsTrigger value="deposit" className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300">
               Deposit
+            </TabsTrigger>
+            <TabsTrigger value="reallocate" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-slate-300">
+              Reallocate
             </TabsTrigger>
             <TabsTrigger value="withdraw" className="data-[state=active]:bg-red-600 data-[state=active]:text-white text-slate-300">
               Withdraw
@@ -161,7 +175,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                       Add strategies and specify deposit amounts
                     </CardDescription>
                   </div>
-                  <Dialog>
+                  <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                     <DialogTrigger asChild>
                       <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0">
                         <Plus className="w-4 h-4 mr-2" />
@@ -223,7 +237,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           onClick={() => removeStrategy(strategy.id)}
                           className="bg-transparent text-red-400 border-red-400 hover:bg-red-400/10 hover:text-red-300"
                         >
-                          <Minus className="w-4 h-4" />
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -275,6 +289,137 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                     disabled={totalAllocated === 0 || selectedStrategies.length === 0}
                   >
                     Confirm Deposit
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="reallocate" className="space-y-6">
+            {/* Mode Selection */}
+            <Card className="bg-slate-800/60 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Rebalance Mode</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Choose how you want to specify your new allocation
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex space-x-4">
+                  <Button
+                    variant={rebalanceMode === 'dollar' ? 'default' : 'outline'}
+                    onClick={() => setRebalanceMode('dollar')}
+                    className={rebalanceMode === 'dollar' 
+                      ? "bg-purple-600 hover:bg-purple-700 text-white border-0" 
+                      : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                    }
+                  >
+                    Dollar Amount
+                  </Button>
+                  <Button
+                    variant={rebalanceMode === 'percentage' ? 'default' : 'outline'}
+                    onClick={() => setRebalanceMode('percentage')}
+                    className={rebalanceMode === 'percentage' 
+                      ? "bg-purple-600 hover:bg-purple-700 text-white border-0" 
+                      : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                    }
+                  >
+                    Percentage
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Current Positions for Rebalancing */}
+            <Card className="bg-slate-800/60 border-slate-700">
+              <CardHeader>
+                <CardTitle className="text-white">Rebalance Positions</CardTitle>
+                <CardDescription className="text-slate-300">
+                  Set new target {rebalanceMode === 'dollar' ? 'amounts' : 'percentages'} for your positions
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {currentPositions.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400">
+                    No active positions to rebalance.
+                  </div>
+                ) : (
+                  currentPositions.map((position) => (
+                    <div key={position.id} className="flex items-center space-x-4 p-4 bg-slate-700/30 rounded-lg">
+                      <div className="flex-1">
+                        <div className="font-medium text-white">{position.protocol}</div>
+                        <div className="text-sm text-slate-400">{position.name} • {position.chain}</div>
+                        <div className="text-sm text-green-400">{position.apy}% APY</div>
+                        <div className="text-sm text-slate-300">Current: ${position.value.toFixed(2)}</div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="number"
+                          value={rebalanceAmounts[position.id] || 0}
+                          onChange={(e) => updateRebalanceAmount(position.id, Number(e.target.value))}
+                          className="w-32 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-slate-400">
+                          {rebalanceMode === 'dollar' ? 'USDC' : '%'}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
+
+                {currentPositions.length > 0 && totalRebalancing > 0 && (
+                  <>
+                    <Separator className="bg-slate-600" />
+                    <div className="flex justify-between items-center font-medium">
+                      <span className="text-white">
+                        {rebalanceMode === 'dollar' ? 'Total Target:' : 'Total Percentage:'}
+                      </span>
+                      <span className="text-purple-400">
+                        {rebalanceMode === 'dollar' ? `$${totalRebalancing.toFixed(2)} USDC` : `${totalRebalancing.toFixed(1)}%`}
+                      </span>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Rebalance Summary */}
+            {totalRebalancing > 0 && (
+              <Card className="bg-slate-800/60 border-slate-700">
+                <CardHeader>
+                  <CardTitle className="text-white">Rebalance Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex justify-between">
+                    <span className="text-slate-300">Total Target:</span>
+                    <span className="font-bold text-white">
+                      {rebalanceMode === 'dollar' ? `$${totalRebalancing.toFixed(2)} USDC` : `${totalRebalancing.toFixed(1)}%`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="flex items-center text-slate-300">
+                      <Zap className="w-4 h-4 mr-1" />
+                      Est. Gas Cost:
+                    </span>
+                    <span className="text-slate-300">${(estimatedGas * 2000).toFixed(2)} (${estimatedGas} ETH)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="flex items-center text-slate-300">
+                      <Clock className="w-4 h-4 mr-1" />
+                      Est. Time:
+                    </span>
+                    <span className="text-slate-300">{estimatedTime}</span>
+                  </div>
+                  
+                  <Separator className="bg-slate-600" />
+                  
+                  <Button 
+                    className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 h-12 text-lg font-semibold text-white border-0"
+                    disabled={totalRebalancing === 0}
+                  >
+                    Confirm Rebalance
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </CardContent>

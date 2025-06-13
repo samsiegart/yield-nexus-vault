@@ -33,41 +33,43 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({
   height = "h-32" 
 }) => {
   return (
-    <ChartContainer config={chartConfig} className={height}>
-      <LineChart data={portfolioData}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-        <XAxis 
-          dataKey="date" 
-          stroke="#9CA3AF"
-          fontSize={12}
-        />
-        <YAxis 
-          stroke="#9CA3AF"
-          fontSize={12}
-          tickFormatter={(value) => `$${value.toLocaleString()}`}
-        />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <Line 
-          type="monotone" 
-          dataKey="totalBalance" 
-          stroke="#10B981" 
-          strokeWidth={3}
-          dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-          name="Total Balance"
-        />
-        {showDeposits && (
+    <div className={`w-full ${height}`}>
+      <ChartContainer config={chartConfig} className="w-full h-full">
+        <LineChart data={portfolioData} width="100%" height="100%">
+          <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+          <XAxis 
+            dataKey="date" 
+            stroke="#9CA3AF"
+            fontSize={12}
+          />
+          <YAxis 
+            stroke="#9CA3AF"
+            fontSize={12}
+            tickFormatter={(value) => `$${value.toLocaleString()}`}
+          />
+          <ChartTooltip content={<ChartTooltipContent />} />
           <Line 
             type="monotone" 
-            dataKey="totalDeposits" 
-            stroke="#3B82F6" 
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-            name="Total Deposits"
+            dataKey="totalBalance" 
+            stroke="#10B981" 
+            strokeWidth={3}
+            dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
+            name="Total Balance"
           />
-        )}
-      </LineChart>
-    </ChartContainer>
+          {showDeposits && (
+            <Line 
+              type="monotone" 
+              dataKey="totalDeposits" 
+              stroke="#3B82F6" 
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+              name="Total Deposits"
+            />
+          )}
+        </LineChart>
+      </ChartContainer>
+    </div>
   );
 };
 
