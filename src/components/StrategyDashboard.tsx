@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -126,8 +127,8 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
         <Card className="bg-slate-800/60 border-slate-700 relative">
           <CardHeader>
             <CardTitle className="text-white">Your Portfolio Balance</CardTitle>
-            <div className="text-3xl font-bold text-white">$144,789</div>
-            <div className="text-green-400">+7.7% WoW</div>
+            <div className={`text-3xl font-bold text-white ${!walletConnected ? 'blur-sm' : ''}`}>$144,789</div>
+            <div className={`text-green-400 ${!walletConnected ? 'blur-sm' : ''}`}>+7.7% WoW</div>
           </CardHeader>
           <CardContent>
             <div className="relative">
@@ -246,3 +247,4 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 };
 
 export default StrategyDashboard;
+
