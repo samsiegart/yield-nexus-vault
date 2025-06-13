@@ -1,10 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { PieChart, Pie, Cell } from 'recharts';
 import { Wallet, TrendingUp, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
+import PortfolioChart from './PortfolioChart';
 
 interface PerformanceViewProps {
   walletConnected: boolean;
@@ -158,39 +158,7 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ChartContainer config={chartConfig} className="h-80">
-                  <LineChart data={performanceData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#9CA3AF"
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="#9CA3AF"
-                      fontSize={12}
-                      tickFormatter={(value) => `$${value.toLocaleString()}`}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Line 
-                      type="monotone" 
-                      dataKey="totalBalance" 
-                      stroke="#10B981" 
-                      strokeWidth={3}
-                      dot={{ fill: '#10B981', strokeWidth: 2, r: 4 }}
-                      name="Total Balance"
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="totalDeposits" 
-                      stroke="#3B82F6" 
-                      strokeWidth={2}
-                      strokeDasharray="5 5"
-                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
-                      name="Total Deposits"
-                    />
-                  </LineChart>
-                </ChartContainer>
+                <PortfolioChart showDeposits={true} height="h-80" />
               </CardContent>
             </Card>
 

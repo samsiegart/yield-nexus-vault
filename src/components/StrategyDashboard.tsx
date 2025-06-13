@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Wallet, TrendingUp } from 'lucide-react';
+import PortfolioChart from './PortfolioChart';
 
 interface Strategy {
   id: string;
@@ -116,68 +116,26 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
     { id: 'compound-eth', protocol: 'Compound', name: '', spread: 40, apy: 4.0, chain: 'Ethereum' }
   ]);
 
-  const WalletConnectPrompt = () => (
-    <Card className="bg-slate-800/60 border-slate-700">
-      <CardContent className="text-center py-12">
-        <Wallet className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-white mb-2">Connect Your Wallet</h3>
-        <p className="text-slate-300 mb-6">Connect your wallet to view and manage your positions</p>
-        <Button 
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-        >
-          <Wallet className="w-4 h-4 mr-2" />
-          Connect Wallet
-        </Button>
-      </CardContent>
-    </Card>
-  );
-
   return (
     <div className="space-y-8">
       {/* Portfolio Balance Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Portfolio Card */}
-        <div className="lg:col-span-2">
-          <Card className="bg-slate-800/60 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white">Your Portfolio Balance</CardTitle>
-              <div className="text-3xl font-bold text-white">$144,789</div>
-              <div className="text-green-400">+7.7% WoW</div>
-            </CardHeader>
-            <CardContent>
-              {/* Simple line chart placeholder */}
-              <div className="h-32 bg-slate-700/30 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-8 h-8 text-slate-400" />
-              </div>
-              <div className="flex justify-between mt-4 text-sm text-slate-400">
-                <span>D</span>
-                <span>W</span>
-                <span>M</span>
-                <span>All</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Wallet Options */}
-        <div>
-          <Card className="bg-slate-800/60 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white text-lg">From Your Wallets</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
-                Meta Mask
-              </Button>
-              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
-                Keplr
-              </Button>
-              <Button variant="outline" className="w-full justify-start bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
-                Phantom
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="grid grid-cols-1 gap-6">
+        <Card className="bg-slate-800/60 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Your Portfolio Balance</CardTitle>
+            <div className="text-3xl font-bold text-white">$144,789</div>
+            <div className="text-green-400">+7.7% WoW</div>
+          </CardHeader>
+          <CardContent>
+            <PortfolioChart height="h-32" />
+            <div className="flex justify-between mt-4 text-sm text-slate-400">
+              <span>D</span>
+              <span>W</span>
+              <span>M</span>
+              <span>All</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Yield Opportunities */}
@@ -195,7 +153,6 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                     {strategy.apy}%
                   </div>
                   <div className="text-xs text-slate-400">APY</div>
-                  <div className="text-xs text-slate-400 mt-1">{strategy.riskLevel}</div>
                 </div>
               </CardContent>
             </Card>
@@ -217,10 +174,24 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
       </Card>
 
       {/* Distribution (Your Positions) */}
-      {walletConnected && (
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-6">Distribution</h2>
-          
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">Your Active Positions</h2>
+        
+        {!walletConnected ? (
+          <Card className="bg-slate-800/60 border-slate-700">
+            <CardContent className="text-center py-12">
+              <Wallet className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">Connect Your Wallet</h3>
+              <p className="text-slate-300 mb-6">Connect your wallet to view and manage your positions</p>
+              <Button 
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+              >
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect Wallet
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
           <Card className="bg-slate-800/60 border-slate-700">
             <CardContent className="p-6 space-y-4">
               {currentPositions.map((position) => (
@@ -249,8 +220,8 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               </div>
             </CardContent>
           </Card>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
