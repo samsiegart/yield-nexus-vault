@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -102,13 +103,15 @@ interface StrategyDashboardProps {
   onSelectPresetStrategies: (strategies: Strategy[]) => void;
   walletConnected: boolean;
   onNavigateToDeposit: () => void;
+  onConnectWallet: () => void;
 }
 
 const StrategyDashboard: React.FC<StrategyDashboardProps> = ({ 
   onSelectStrategy, 
   onSelectPresetStrategies,
   walletConnected,
-  onNavigateToDeposit
+  onNavigateToDeposit,
+  onConnectWallet
 }) => {
   const [currentPositions] = useState([
     { id: 'aave-eth', protocol: 'AAVE', name: 'USAV', spread: 30, apy: 14.0, chain: 'Ethereum' },
@@ -120,14 +123,29 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
     <div className="space-y-8">
       {/* Portfolio Balance Section */}
       <div className="grid grid-cols-1 gap-6">
-        <Card className="bg-slate-800/60 border-slate-700">
+        <Card className="bg-slate-800/60 border-slate-700 relative">
           <CardHeader>
             <CardTitle className="text-white">Your Portfolio Balance</CardTitle>
             <div className="text-3xl font-bold text-white">$144,789</div>
             <div className="text-green-400">+7.7% WoW</div>
           </CardHeader>
           <CardContent>
-            <PortfolioChart height="h-32" />
+            <div className="relative">
+              <div className={walletConnected ? '' : 'blur-sm'}>
+                <PortfolioChart height="h-32" />
+              </div>
+              {!walletConnected && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Button 
+                    onClick={onConnectWallet}
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Connect Wallet
+                  </Button>
+                </div>
+              )}
+            </div>
             <div className="flex justify-between mt-4 text-sm text-slate-400">
               <span>D</span>
               <span>W</span>
@@ -184,6 +202,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               <h3 className="text-xl font-semibold text-white mb-2">Connect Your Wallet</h3>
               <p className="text-slate-300 mb-6">Connect your wallet to view and manage your positions</p>
               <Button 
+                onClick={onConnectWallet}
                 className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
               >
                 <Wallet className="w-4 h-4 mr-2" />

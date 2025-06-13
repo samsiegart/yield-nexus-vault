@@ -14,6 +14,10 @@ const Index = () => {
   const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [currentView, setCurrentView] = useState('dashboard');
 
+  const handleConnectWallet = () => {
+    setWalletConnected(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
       {/* Header */}
@@ -28,7 +32,7 @@ const Index = () => {
             </div>
             <WalletConnection 
               isConnected={walletConnected} 
-              onConnect={() => setWalletConnected(true)}
+              onConnect={handleConnectWallet}
               onDisconnect={() => setWalletConnected(false)}
             />
           </div>
@@ -84,6 +88,7 @@ const Index = () => {
             }}
             walletConnected={walletConnected}
             onNavigateToDeposit={() => setCurrentView('deposit')}
+            onConnectWallet={handleConnectWallet}
           />
         )}
 
@@ -92,14 +97,14 @@ const Index = () => {
             selectedStrategies={selectedStrategies}
             onUpdateStrategies={setSelectedStrategies}
             walletConnected={walletConnected}
-            onConnectWallet={() => setWalletConnected(true)}
+            onConnectWallet={handleConnectWallet}
           />
         )}
 
         {currentView === 'performance' && (
           <PerformanceView 
             walletConnected={walletConnected}
-            onConnectWallet={() => setWalletConnected(true)}
+            onConnectWallet={handleConnectWallet}
           />
         )}
       </main>

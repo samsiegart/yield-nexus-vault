@@ -35,7 +35,7 @@ const PortfolioChart: React.FC<PortfolioChartProps> = ({
   return (
     <div className={`w-full ${height}`}>
       <ChartContainer config={chartConfig} className="w-full h-full">
-        <LineChart data={portfolioData} width="100%" height="100%">
+        <LineChart data={portfolioData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
           <XAxis 
             dataKey="date" 
