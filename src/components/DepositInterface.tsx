@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,7 +62,6 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [rebalanceAmounts, setRebalanceAmounts] = useState<{[key: string]: number}>({});
   const [rebalanceMode, setRebalanceMode] = useState<'dollar' | 'percentage'>('dollar');
-  const [allocationMode, setAllocationMode] = useState<'dollar' | 'percentage'>('dollar');
   const [totalDepositAmount, setTotalDepositAmount] = useState(1000);
 
   const updateStrategyAmount = (strategyId: string, amount: number) => {
@@ -98,11 +96,8 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
     }));
   };
 
-  const totalAllocated = allocationMode === 'dollar' 
-    ? selectedStrategies.reduce((sum, s) => sum + (s.amount || 0), 0)
-    : selectedStrategies.reduce((sum, s) => sum + (s.amount ? (s.amount / 100) * totalDepositAmount : 0), 0);
-  
   const totalPercentage = selectedStrategies.reduce((sum, s) => sum + (s.amount || 0), 0);
+  const totalAllocated = selectedStrategies.reduce((sum, s) => sum + (s.amount ? (s.amount / 100) * totalDepositAmount : 0), 0);
   const totalWithdrawing = Object.values(withdrawAmounts).reduce((sum, amount) => sum + amount, 0);
   const totalRebalancing = Object.values(rebalanceAmounts).reduce((sum, amount) => sum + amount, 0);
   const estimatedGas = 0.0045;
@@ -155,84 +150,44 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                   <div>
                     <CardTitle className="text-white">Strategy Allocation</CardTitle>
                     <CardDescription className="text-slate-300">
-                      Add strategies and specify {allocationMode === 'dollar' ? 'deposit amounts' : 'allocation percentages'}
+                      Add strategies and specify allocation percentages
                     </CardDescription>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="flex space-x-2">
-                      <Button
-                        variant={allocationMode === 'dollar' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAllocationMode('dollar')}
-                        className={allocationMode === 'dollar' 
-                          ? "bg-blue-600 hover:bg-blue-700 text-white border-0" 
-                          : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-                        }
-                      >
-                        Dollar
+                  <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Strategy
                       </Button>
-                      <Button
-                        variant={allocationMode === 'percentage' ? 'default' : 'outline'}
-                        size="sm"
-                        onClick={() => setAllocationMode('percentage')}
-                        className={allocationMode === 'percentage' 
-                          ? "bg-blue-600 hover:bg-blue-700 text-white border-0" 
-                          : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-                        }
-                      >
-                        Percentage
-                      </Button>
-                    </div>
-                    <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                      <DialogTrigger asChild>
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white border-0">
-                          <Plus className="w-4 h-4 mr-2" />
-                          Add Strategy
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle className="text-white">Add Strategy</DialogTitle>
-                          <DialogDescription className="text-slate-400">
-                            Choose from available strategies
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <div className="space-y-2 max-h-64 overflow-y-auto">
-                          {availableStrategies.map((strategy) => (
-                            <Button
-                              key={strategy.id}
-                              variant="outline"
-                              className="w-full justify-start bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-                              onClick={() => addStrategy(strategy)}
-                            >
-                              <div className="text-left">
-                                <div className="font-medium">{strategy.protocol}</div>
-                                <div className="text-sm text-slate-400">{strategy.name} • {strategy.chain} • {strategy.apy}% APY</div>
-                              </div>
-                            </Button>
-                          ))}
-                        </div>
-                      </DialogContent>
-                    </Dialog>
-                  </div>
+                    </DialogTrigger>
+                    <DialogContent className="bg-slate-900 border-slate-700 max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="text-white">Add Strategy</DialogTitle>
+                        <DialogDescription className="text-slate-400">
+                          Choose from available strategies
+                        </DialogDescription>
+                      </DialogHeader>
+                      
+                      <div className="space-y-2 max-h-64 overflow-y-auto">
+                        {availableStrategies.map((strategy) => (
+                          <Button
+                            key={strategy.id}
+                            variant="outline"
+                            className="w-full justify-start bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                            onClick={() => addStrategy(strategy)}
+                          >
+                            <div className="text-left">
+                              <div className="font-medium">{strategy.protocol}</div>
+                              <div className="text-sm text-slate-400">{strategy.name} • {strategy.chain} • {strategy.apy}% APY</div>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {allocationMode === 'percentage' && (
-                  <div>
-                    <Label htmlFor="total-deposit" className="text-white">Total Deposit Amount (USDC)</Label>
-                    <Input
-                      id="total-deposit"
-                      type="number"
-                      value={totalDepositAmount}
-                      onChange={(e) => setTotalDepositAmount(Number(e.target.value))}
-                      className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
-                      placeholder="1000"
-                    />
-                  </div>
-                )}
-
                 {selectedStrategies.length === 0 ? (
                   <div className="text-center py-8 text-slate-400">
                     No strategies selected. Click "Add Strategy" to get started.
@@ -252,11 +207,9 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           onChange={(e) => updateStrategyAmount(strategy.id, Number(e.target.value))}
                           className="w-32 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
                           placeholder="0"
-                          max={allocationMode === 'percentage' ? 100 : undefined}
+                          max={100}
                         />
-                        <span className="text-sm text-slate-400">
-                          {allocationMode === 'dollar' ? 'USDC' : '%'}
-                        </span>
+                        <span className="text-sm text-slate-400">%</span>
                         <Button
                           variant="outline"
                           size="sm"
@@ -274,48 +227,54 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                   <>
                     <Separator className="bg-slate-600" />
                     <div className="flex justify-between items-center font-medium">
-                      <span className="text-white">
-                        {allocationMode === 'dollar' ? 'Total Deposit:' : 'Total Percentage:'}
-                      </span>
-                      <span className="text-green-400">
-                        {allocationMode === 'dollar' 
-                          ? `$${totalAllocated.toFixed(2)} USDC` 
-                          : `${totalPercentage.toFixed(1)}%`
-                        }
-                      </span>
+                      <span className="text-white">Total Percentage:</span>
+                      <span className="text-green-400">{totalPercentage.toFixed(1)}%</span>
                     </div>
-                    {allocationMode === 'percentage' && (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-300">Calculated Amount:</span>
-                        <span className="text-slate-300">${totalAllocated.toFixed(2)} USDC</span>
-                      </div>
-                    )}
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-300">Calculated Amount:</span>
+                      <span className="text-slate-300">${totalAllocated.toFixed(2)} USDC</span>
+                    </div>
                   </>
                 )}
               </CardContent>
             </Card>
 
-            {/* Chain Selection */}
+            {/* Add Funds */}
             <Card className="bg-slate-800/60 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-white">Select Funding Chain</CardTitle>
+                <CardTitle className="text-white">Add Funds</CardTitle>
                 <CardDescription className="text-slate-300">
-                  Choose which blockchain your USDC is on for funding these strategies
+                  Choose which blockchain your USDC is on and specify the total amount to deposit
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <Select value={selectedChain} onValueChange={setSelectedChain}>
-                  <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
-                    <SelectValue placeholder="Select a chain" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    {supportedChains.map((chain) => (
-                      <SelectItem key={chain.id} value={chain.id.toString()} className="text-white hover:bg-slate-700">
-                        {chain.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="funding-chain" className="text-white">Funding Chain</Label>
+                  <Select value={selectedChain} onValueChange={setSelectedChain}>
+                    <SelectTrigger className="bg-slate-700/50 border-slate-600 text-white">
+                      <SelectValue placeholder="Select a chain" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-800 border-slate-600">
+                      {supportedChains.map((chain) => (
+                        <SelectItem key={chain.id} value={chain.id.toString()} className="text-white hover:bg-slate-700">
+                          {chain.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="total-deposit" className="text-white">Total Deposit Amount (USDC)</Label>
+                  <Input
+                    id="total-deposit"
+                    type="number"
+                    value={totalDepositAmount}
+                    onChange={(e) => setTotalDepositAmount(Number(e.target.value))}
+                    className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                    placeholder="1000"
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -349,12 +308,12 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                   
                   <Button 
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 h-12 text-lg font-semibold text-white border-0"
-                    disabled={totalAllocated === 0 || selectedStrategies.length === 0 || (allocationMode === 'percentage' && totalPercentage !== 100)}
+                    disabled={totalAllocated === 0 || selectedStrategies.length === 0 || totalPercentage !== 100}
                   >
                     Confirm Deposit
                     <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
-                  {allocationMode === 'percentage' && totalPercentage !== 100 && (
+                  {totalPercentage !== 100 && (
                     <p className="text-red-400 text-sm text-center">Percentages must add up to 100%</p>
                   )}
                 </CardContent>
