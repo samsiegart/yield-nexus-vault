@@ -1,31 +1,42 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { PieChart, Pie, Cell } from 'recharts';
-import { Wallet, TrendingUp, DollarSign, PieChart as PieChartIcon } from 'lucide-react';
-import PortfolioChart from './PortfolioChart';
-
-interface PerformanceViewProps {
-  walletConnected: boolean;
-  onConnectWallet: () => void;
-}
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { PieChart, Pie, Cell } from "recharts";
+import {
+  Wallet,
+  TrendingUp,
+  DollarSign,
+  PieChart as PieChartIcon,
+} from "lucide-react";
+import PortfolioChart from "./PortfolioChart";
+import { useAgoric } from "@agoric/react-components";
 
 // Mock data for charts
 const performanceData = [
-  { date: '2024-01', totalBalance: 5000, totalDeposits: 5000 },
-  { date: '2024-02', totalBalance: 5150, totalDeposits: 5000 },
-  { date: '2024-03', totalBalance: 5280, totalDeposits: 5000 },
-  { date: '2024-04', totalBalance: 5420, totalDeposits: 6000 },
-  { date: '2024-05', totalBalance: 6680, totalDeposits: 6000 },
-  { date: '2024-06', totalBalance: 6890, totalDeposits: 6000 },
+  { date: "2024-01", totalBalance: 5000, totalDeposits: 5000 },
+  { date: "2024-02", totalBalance: 5150, totalDeposits: 5000 },
+  { date: "2024-03", totalBalance: 5280, totalDeposits: 5000 },
+  { date: "2024-04", totalBalance: 5420, totalDeposits: 6000 },
+  { date: "2024-05", totalBalance: 6680, totalDeposits: 6000 },
+  { date: "2024-06", totalBalance: 6890, totalDeposits: 6000 },
 ];
 
 const portfolioData = [
-  { name: 'Aave USDC', value: 2563.50, color: '#3B82F6' },
-  { name: 'Yearn v3', value: 1847.20, color: '#8B5CF6' },
-  { name: 'Radiant Capital', value: 1250.80, color: '#10B981' },
-  { name: 'Beefy Finance', value: 1228.50, color: '#F59E0B' },
+  { name: "Aave USDC", value: 2563.5, color: "#3B82F6" },
+  { name: "Yearn v3", value: 1847.2, color: "#8B5CF6" },
+  { name: "Radiant Capital", value: 1250.8, color: "#10B981" },
+  { name: "Beefy Finance", value: 1228.5, color: "#F59E0B" },
 ];
 
 const chartConfig = {
@@ -34,30 +45,33 @@ const chartConfig = {
     color: "#10B981",
   },
   totalDeposits: {
-    label: "Total Deposits", 
+    label: "Total Deposits",
     color: "#3B82F6",
   },
 };
 
-const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onConnectWallet }) => {
+const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
+
+const PerformanceView = () => {
+  const { walletConnection } = useAgoric();
   const totalTVL = "$2.8B";
   const totalYieldEarned = "$890.00";
-  const currentBalance = 6890.00;
-  const totalDeposits = 6000.00;
+  const currentBalance = 6890.0;
+  const totalDeposits = 6000.0;
   const totalYield = currentBalance - totalDeposits;
 
   const WalletConnectPrompt = () => (
     <Card className="bg-slate-800/40 border-slate-600">
       <CardContent className="text-center py-16">
         <Wallet className="w-16 h-16 text-slate-400 mx-auto mb-6" />
-        <h3 className="text-2xl font-semibold text-white mb-3">Connect Your Wallet</h3>
+        <h3 className="text-2xl font-semibold text-white mb-3">
+          Connect Your Wallet
+        </h3>
         <p className="text-slate-300 mb-8 max-w-md mx-auto">
-          Connect your wallet to view your personal performance metrics and portfolio analytics
+          Connect your wallet to view your personal performance metrics and
+          portfolio analytics
         </p>
-        <Button 
-          onClick={onConnectWallet}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-8 py-3 text-lg"
-        >
+        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-8 py-3 text-lg">
           <Wallet className="w-5 h-5 mr-2" />
           Connect Wallet
         </Button>
@@ -69,11 +83,15 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
     <div className="space-y-8">
       {/* Global Stats */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">Platform Overview</h2>
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Platform Overview
+        </h2>
         <div className="grid md:grid-cols-2 gap-6">
           <Card className="bg-slate-800/60 border-slate-600">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Total Value Locked</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-300">
+                Total Value Locked
+              </CardTitle>
               <DollarSign className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
@@ -86,11 +104,15 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
 
           <Card className="bg-slate-800/60 border-slate-600">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-300">Community Yield Earned</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-300">
+                Community Yield Earned
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-400">{totalYieldEarned}</div>
+              <div className="text-3xl font-bold text-green-400">
+                {totalYieldEarned}
+              </div>
               <p className="text-xs text-slate-400 mt-1">
                 Total yield generated by all users
               </p>
@@ -102,8 +124,8 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
       {/* Personal Performance */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-6">Your Performance</h2>
-        
-        {!walletConnected ? (
+
+        {!walletConnection ? (
           <WalletConnectPrompt />
         ) : (
           <div className="space-y-6">
@@ -111,24 +133,33 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="bg-slate-800/60 border-slate-600">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-300">Current Balance</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-300">
+                    Current Balance
+                  </CardTitle>
                   <DollarSign className="h-4 w-4 text-slate-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">${currentBalance.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-white">
+                    ${currentBalance.toLocaleString()}
+                  </div>
                   <p className="text-xs text-green-400 mt-1">
-                    +{((totalYield / totalDeposits) * 100).toFixed(2)}% total return
+                    +{((totalYield / totalDeposits) * 100).toFixed(2)}% total
+                    return
                   </p>
                 </CardContent>
               </Card>
 
               <Card className="bg-slate-800/60 border-slate-600">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-300">Total Deposits</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-300">
+                    Total Deposits
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-slate-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">${totalDeposits.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-white">
+                    ${totalDeposits.toLocaleString()}
+                  </div>
                   <p className="text-xs text-slate-400 mt-1">
                     Principal amount invested
                   </p>
@@ -137,11 +168,15 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
 
               <Card className="bg-slate-800/60 border-slate-600">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-slate-300">Yield Earned</CardTitle>
+                  <CardTitle className="text-sm font-medium text-slate-300">
+                    Yield Earned
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-slate-400" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-400">${totalYield.toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-green-400">
+                    ${totalYield.toFixed(2)}
+                  </div>
                   <p className="text-xs text-slate-400 mt-1">
                     Total profit generated
                   </p>
@@ -152,7 +187,9 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
             {/* Performance Chart */}
             <Card className="bg-slate-800/60 border-slate-600">
               <CardHeader>
-                <CardTitle className="text-white">Portfolio Performance</CardTitle>
+                <CardTitle className="text-white">
+                  Portfolio Performance
+                </CardTitle>
                 <CardDescription className="text-slate-300">
                   Track your balance growth over time
                 </CardDescription>
@@ -165,7 +202,9 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
             {/* Portfolio Allocation */}
             <Card className="bg-slate-800/60 border-slate-600">
               <CardHeader>
-                <CardTitle className="text-white">Portfolio Allocation</CardTitle>
+                <CardTitle className="text-white">
+                  Portfolio Allocation
+                </CardTitle>
                 <CardDescription className="text-slate-300">
                   Current distribution across strategies
                 </CardDescription>
@@ -188,16 +227,24 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <ChartTooltip 
+                        <ChartTooltip
                           content={({ active, payload }) => {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               return (
                                 <div className="bg-slate-800 border border-slate-600 rounded-lg p-3">
-                                  <p className="text-white font-medium">{data.name}</p>
-                                  <p className="text-green-400">${data.value.toLocaleString()}</p>
+                                  <p className="text-white font-medium">
+                                    {data.name}
+                                  </p>
+                                  <p className="text-green-400">
+                                    ${data.value.toLocaleString()}
+                                  </p>
                                   <p className="text-slate-400 text-sm">
-                                    {((data.value / currentBalance) * 100).toFixed(1)}%
+                                    {(
+                                      (data.value / currentBalance) *
+                                      100
+                                    ).toFixed(1)}
+                                    %
                                   </p>
                                 </div>
                               );
@@ -208,19 +255,26 @@ const PerformanceView: React.FC<PerformanceViewProps> = ({ walletConnected, onCo
                       </PieChart>
                     </ChartContainer>
                   </div>
-                  
+
                   <div className="space-y-4">
                     {portfolioData.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-slate-700/30 rounded-lg"
+                      >
                         <div className="flex items-center space-x-3">
-                          <div 
-                            className="w-4 h-4 rounded-full" 
+                          <div
+                            className="w-4 h-4 rounded-full"
                             style={{ backgroundColor: item.color }}
                           />
-                          <span className="text-white font-medium">{item.name}</span>
+                          <span className="text-white font-medium">
+                            {item.name}
+                          </span>
                         </div>
                         <div className="text-right">
-                          <div className="text-white font-medium">${item.value.toLocaleString()}</div>
+                          <div className="text-white font-medium">
+                            ${item.value.toLocaleString()}
+                          </div>
                           <div className="text-slate-400 text-sm">
                             {((item.value / currentBalance) * 100).toFixed(1)}%
                           </div>

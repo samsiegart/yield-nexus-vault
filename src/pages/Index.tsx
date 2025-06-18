@@ -1,22 +1,22 @@
-
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import WalletConnection from '@/components/WalletConnection';
-import StrategyDashboard from '@/components/StrategyDashboard';
-import DepositInterface from '@/components/DepositInterface';
-import PerformanceView from '@/components/PerformanceView';
-import { Wallet, TrendingUp, Shield, Zap } from 'lucide-react';
+import WalletConnection from "@/components/WalletConnection";
+import StrategyDashboard from "@/components/StrategyDashboard";
+import DepositInterface from "@/components/DepositInterface";
+import PerformanceView from "@/components/PerformanceView";
+import { Wallet, TrendingUp, Shield, Zap } from "lucide-react";
 
 const Index = () => {
-  const [walletConnected, setWalletConnected] = useState(false);
   const [selectedStrategies, setSelectedStrategies] = useState([]);
-  const [currentView, setCurrentView] = useState('dashboard');
-
-  const handleConnectWallet = () => {
-    setWalletConnected(true);
-  };
+  const [currentView, setCurrentView] = useState("dashboard");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
@@ -30,11 +30,7 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-white">YMax</h1>
             </div>
-            <WalletConnection 
-              isConnected={walletConnected} 
-              onConnect={handleConnectWallet}
-              onDisconnect={() => setWalletConnected(false)}
-            />
+            <WalletConnection />
           </div>
         </div>
       </header>
@@ -43,32 +39,35 @@ const Index = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Navigation */}
         <div className="flex space-x-4 mb-8">
-          <Button 
-            variant={currentView === 'dashboard' ? 'default' : 'outline'}
-            onClick={() => setCurrentView('dashboard')}
-            className={currentView === 'dashboard' 
-              ? "bg-blue-600 hover:bg-blue-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+          <Button
+            variant={currentView === "dashboard" ? "default" : "outline"}
+            onClick={() => setCurrentView("dashboard")}
+            className={
+              currentView === "dashboard"
+                ? "bg-blue-600 hover:bg-blue-700 text-white border-0"
+                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
             Strategies
           </Button>
-          <Button 
-            variant={currentView === 'deposit' ? 'default' : 'outline'}
-            onClick={() => setCurrentView('deposit')}
-            className={currentView === 'deposit' 
-              ? "bg-purple-600 hover:bg-purple-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+          <Button
+            variant={currentView === "deposit" ? "default" : "outline"}
+            onClick={() => setCurrentView("deposit")}
+            className={
+              currentView === "deposit"
+                ? "bg-purple-600 hover:bg-purple-700 text-white border-0"
+                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
             Manage Positions
           </Button>
-          <Button 
-            variant={currentView === 'performance' ? 'default' : 'outline'}
-            onClick={() => setCurrentView('performance')}
-            className={currentView === 'performance' 
-              ? "bg-green-600 hover:bg-green-700 text-white border-0" 
-              : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+          <Button
+            variant={currentView === "performance" ? "default" : "outline"}
+            onClick={() => setCurrentView("performance")}
+            className={
+              currentView === "performance"
+                ? "bg-green-600 hover:bg-green-700 text-white border-0"
+                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
             Performance
@@ -76,37 +75,28 @@ const Index = () => {
         </div>
 
         {/* Content */}
-        {currentView === 'dashboard' && (
-          <StrategyDashboard 
+        {currentView === "dashboard" && (
+          <StrategyDashboard
             onSelectStrategy={(strategy) => {
               setSelectedStrategies([...selectedStrategies, strategy]);
-              setCurrentView('deposit');
+              setCurrentView("deposit");
             }}
             onSelectPresetStrategies={(strategies) => {
               setSelectedStrategies(strategies);
-              setCurrentView('deposit');
+              setCurrentView("deposit");
             }}
-            walletConnected={walletConnected}
-            onNavigateToDeposit={() => setCurrentView('deposit')}
-            onConnectWallet={handleConnectWallet}
+            onNavigateToDeposit={() => setCurrentView("deposit")}
           />
         )}
 
-        {currentView === 'deposit' && (
-          <DepositInterface 
+        {currentView === "deposit" && (
+          <DepositInterface
             selectedStrategies={selectedStrategies}
             onUpdateStrategies={setSelectedStrategies}
-            walletConnected={walletConnected}
-            onConnectWallet={handleConnectWallet}
           />
         )}
 
-        {currentView === 'performance' && (
-          <PerformanceView 
-            walletConnected={walletConnected}
-            onConnectWallet={handleConnectWallet}
-          />
-        )}
+        {currentView === "performance" && <PerformanceView />}
       </main>
     </div>
   );
