@@ -1,18 +1,10 @@
-# Welcome to your Lovable project
-
 ## Project info
 
-**URL**: https://lovable.dev/projects/28a19804-08a2-456c-9102-483dc2e9d509
+UI for the proof-of-concept version of YMax. Generated with Lovable initially, but can't get lovable to build it after adding agoric dependencies, so the two way editing won't work (also tried replit to no avail).
 
 ## How can I edit this code?
 
 There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/28a19804-08a2-456c-9102-483dc2e9d509) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
@@ -54,20 +46,9 @@ npm run dev
 
 This project is built with:
 
+- Agoric/ui-kit
 - Vite
 - TypeScript
 - React
 - shadcn-ui
 - Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/28a19804-08a2-456c-9102-483dc2e9d509) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
