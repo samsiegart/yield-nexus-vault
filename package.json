@@ -66,6 +66,8 @@
   },
   "devDependencies": {
     "@agoric/react-components": "0.4.0",
+    "@agoric/web-components": "0.17.0",
+    "@agoric/zoe": "0.26.2",
     "@endo/eventual-send": "^1.2.8",
     "@eslint/js": "^9.9.0",
     "@interchain-ui/react": "1.21.18",
