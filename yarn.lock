@@ -648,7 +648,7 @@
     "@endo/promise-kit" "^0.2.56"
     jessie.js "^0.3.2"
 
-"@agoric/web-components@^0.17.0":
+"@agoric/web-components@0.17.0", "@agoric/web-components@^0.17.0":
   version "0.17.0"
   resolved "https://registry.yarnpkg.com/@agoric/web-components/-/web-components-0.17.0.tgz#654e3fa07fdf0a2b6db40d8903b9be2972b1676b"
   integrity sha512-eOgWAoRH7XpoGgVErInae/DrVFMLz4+Sj6NDNU1kLS6RxiW5/nC89FIRZHoVSO5YDisZnBuXh4seLlvzKtBbrg==
@@ -687,7 +687,7 @@
     glob "^7.1.6"
     tmp "^0.2.1"
 
-"@agoric/zoe@^0.26.2":
+"@agoric/zoe@0.26.2", "@agoric/zoe@^0.26.2":
   version "0.26.2"
   resolved "https://registry.yarnpkg.com/@agoric/zoe/-/zoe-0.26.2.tgz#c6cd260171a4c0307e160b93ae9f6ce29a675d70"
   integrity sha512-xFZQ0Rz4UmHNWCUeLWFqtGgKNBPVvfb5IEmh+nSnbgJK45Y4Kcci77XkciO//e6xQo8dacrNhTELke3iAEISAA==

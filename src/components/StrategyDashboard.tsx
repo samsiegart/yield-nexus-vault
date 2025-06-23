@@ -21,6 +21,8 @@ import {
 import { ArrowRight, Wallet, TrendingUp, Plus } from "lucide-react";
 import PortfolioChart from "./PortfolioChart";
 import { useAgoric } from "@agoric/react-components";
+import WalletConnection from "@/components/WalletConnection";
+import { usePortfolioStore } from "@/store";
 
 interface Strategy {
   id: string;
@@ -34,91 +36,80 @@ interface Strategy {
   minDeposit: number;
 }
 
-const strategies: Strategy[] = [
-  {
-    id: "aave-eth",
-    protocol: "Aave",
-    name: "Vault USDC",
-    apy: 4.6,
-    tvl: "$2.1B",
-    riskLevel: "Low",
-    chain: "Ethereum",
-    description: "Secure lending on Aave with stable returns",
-    minDeposit: 100,
-  },
-  {
-    id: "compound-eth",
-    protocol: "Compound",
-    name: "USDC Supply",
-    apy: 8.1,
-    tvl: "$890M",
-    riskLevel: "Low",
-    chain: "Ethereum",
-    description: "Conservative yield through Compound protocol",
-    minDeposit: 50,
-  },
-  {
-    id: "yearn-eth",
-    protocol: "Yearn v3",
-    name: "USDC Vault",
-    apy: 6.3,
-    tvl: "$450M",
-    riskLevel: "Medium",
-    chain: "Ethereum",
-    description: "Automated yield optimization strategies",
-    minDeposit: 250,
-  },
-  {
-    id: "beefy-polygon",
-    protocol: "Beefy",
-    name: "Auto-Compound",
-    apy: 7.8,
-    tvl: "$120M",
-    riskLevel: "Medium",
-    chain: "Polygon",
-    description: "Auto-compounding yield farming on Polygon",
-    minDeposit: 25,
-  },
-  {
-    id: "radiant-arbitrum",
-    protocol: "Radiant",
-    name: "USDC Lending",
-    apy: 5.4,
-    tvl: "$380M",
-    riskLevel: "Medium",
-    chain: "Arbitrum",
-    description: "Cross-chain lending with boosted rewards",
-    minDeposit: 100,
-  },
-  {
-    id: "notion-base",
-    protocol: "Notional",
-    name: "Liquidity Pool",
-    apy: 8.9,
-    tvl: "$95M",
-    riskLevel: "High",
-    chain: "Base",
-    description: "High-yield liquidity provision on Base",
-    minDeposit: 500,
-  },
-  {
-    id: "noble-usav",
-    protocol: "Noble",
-    name: "USAV",
-    apy: 14.0,
-    tvl: "$25M",
-    riskLevel: "High",
-    chain: "Noble",
-    description: "High-yield staking on Noble",
-    minDeposit: 100,
-  },
-];
-
 interface StrategyDashboardProps {
   onSelectStrategy: (strategy: Strategy) => void;
   onSelectPresetStrategies: (strategies: Strategy[]) => void;
   onNavigateToDeposit: () => void;
 }
+
+const strategies: Strategy[] = [
+  {
+    id: "aave-eth",
+    protocol: "AAVE",
+    name: "USAV",
+    apy: 14.0,
+    tvl: "$1.2B",
+    riskLevel: "Low",
+    chain: "Ethereum",
+    description: "Aave's USDC vault with automated yield optimization",
+    minDeposit: 100,
+  },
+  {
+    id: "beefy-polygon",
+    protocol: "Beefy",
+    name: "USDC",
+    apy: 10.0,
+    tvl: "$850M",
+    riskLevel: "Low",
+    chain: "Polygon",
+    description: "Beefy Finance USDC yield farming on Polygon",
+    minDeposit: 50,
+  },
+  {
+    id: "compound-eth",
+    protocol: "Compound",
+    name: "USDC",
+    apy: 4.0,
+    tvl: "$2.1B",
+    riskLevel: "Low",
+    chain: "Ethereum",
+    description: "Compound's USDC lending protocol",
+    minDeposit: 100,
+  },
+  {
+    id: "yearn-eth",
+    protocol: "Yearn",
+    name: "USDC Vault",
+    apy: 8.5,
+    tvl: "$650M",
+    riskLevel: "Medium",
+    chain: "Ethereum",
+    description: "Yearn Finance USDC vault with automated strategies",
+    minDeposit: 1000,
+  },
+  {
+    id: "curve-eth",
+    protocol: "Curve",
+    name: "3Pool",
+    apy: 6.2,
+    tvl: "$3.2B",
+    riskLevel: "Low",
+    chain: "Ethereum",
+    description: "Curve's 3Pool stablecoin liquidity pool",
+    minDeposit: 100,
+  },
+  {
+    id: "convex-eth",
+    protocol: "Convex",
+    name: "USDC",
+    apy: 12.5,
+    tvl: "$1.8B",
+    riskLevel: "Medium",
+    chain: "Ethereum",
+    description: "Convex Finance Curve LP staking",
+    minDeposit: 500,
+  },
+];
 
 const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onSelectStrategy,
@@ -126,33 +117,8 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onNavigateToDeposit,
 }) => {
   const { walletConnection } = useAgoric();
-  const [currentPositions] = useState([
-    {
-      id: "aave-eth",
-      protocol: "AAVE",
-      name: "USAV",
-      spread: 30,
-      apy: 14.0,
-      chain: "Ethereum",
-    },
-    {
-      id: "beefy-polygon",
-      protocol: "Beefy",
-      name: "USDC",
-      spread: 0,
-      apy: 10.0,
-      chain: "Polygon",
-    },
-    {
-      id: "compound-eth",
-      protocol: "Compound",
-      name: "",
-      spread: 40,
-      apy: 4.0,
-      chain: "Ethereum",
-    },
-  ]);
-
+  const { currentBalance, weeklyReturn, positions, isLoading } =
+    usePortfolioStore();
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
 
@@ -166,27 +132,28 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   return (
     <div className="space-y-8">
       {/* Portfolio Balance Section */}
-      <div className="grid grid-cols-1 gap-6">
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Your Portfolio Balance
+        </h2>
+
         <Card className="bg-slate-800/60 border-slate-700 relative">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-white">
-                  Your Portfolio Balance
-                </CardTitle>
                 <div
                   className={`text-3xl font-bold text-white ${
                     !walletConnection ? "blur-sm" : ""
                   }`}
                 >
-                  $144,789
+                  ${currentBalance.toLocaleString()}
                 </div>
                 <div
                   className={`text-green-400 ${
                     !walletConnection ? "blur-sm" : ""
                   }`}
                 >
-                  +7.7% WoW
+                  +{weeklyReturn}% WoW
                 </div>
               </div>
               {walletConnection && (
@@ -229,9 +196,13 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                       <div className="text-sm text-slate-300 bg-slate-800/50 p-3 rounded-lg">
                         <p className="mb-2">Current allocation:</p>
                         <ul className="space-y-1">
-                          <li>• AAVE USAV: 30% ($43,437)</li>
-                          <li>• Beefy USDC: 0% ($0)</li>
-                          <li>• Compound: 40% ($57,916)</li>
+                          {positions.map((position) => (
+                            <li key={position.id}>
+                              • {position.protocol} {position.name}:{" "}
+                              {position.percentage}% ($
+                              {position.value.toLocaleString()})
+                            </li>
+                          ))}
                         </ul>
                       </div>
 
@@ -256,13 +227,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               </div>
               {!walletConnection && (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <Button
-                    onClick={onNavigateToDeposit}
-                    className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-                  >
-                    <Wallet className="w-4 h-4 mr-2" />
-                    Connect Wallet
-                  </Button>
+                  <WalletConnection />
                 </div>
               )}
             </div>
@@ -337,53 +302,52 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
               <p className="text-slate-300 mb-6">
                 Connect your wallet to view and manage your positions
               </p>
-              <Button
-                onClick={onNavigateToDeposit}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                Connect Wallet
-              </Button>
+              <WalletConnection />
             </CardContent>
           </Card>
         ) : (
-          <Card className="bg-slate-800/60 border-slate-700">
-            <CardContent className="p-6 space-y-4">
-              {currentPositions.map((position) => (
-                <div
-                  key={position.id}
-                  className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="font-medium text-white">
-                      {position.protocol} {position.name}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {positions.map((position) => (
+              <Card
+                key={position.id}
+                className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
+                onClick={() => onNavigateToDeposit()}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-lg font-semibold text-white">
+                      {position.protocol}
+                    </div>
+                    <Badge
+                      variant="secondary"
+                      className="bg-slate-700 text-slate-300"
+                    >
+                      {position.chain}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-slate-300 mb-2">
+                    {position.name}
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="text-xl font-bold text-green-400">
+                        {position.apy}%
+                      </div>
+                      <div className="text-xs text-slate-400">APY</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-white">
+                        {position.percentage}%
+                      </div>
+                      <div className="text-sm text-slate-400">
+                        ${position.value.toLocaleString()}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-6 text-sm">
-                    <div className="text-slate-300">{position.spread}%</div>
-                    <div className="text-green-400">{position.apy}%</div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-slate-600/50 border-slate-500 text-white hover:bg-slate-500/50"
-                    >
-                      Edit...
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              <div className="pt-4 border-t border-slate-600">
-                <Button
-                  onClick={onNavigateToDeposit}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
-                >
-                  Manage Positions
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
       </div>
     </div>

@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import PortfolioChart from "./PortfolioChart";
 import { useAgoric } from "@agoric/react-components";
+import WalletConnection from "@/components/WalletConnection";
+import { usePortfolioStore } from "@/store";
 
 // Mock data for charts
 const performanceData = [
@@ -30,13 +32,6 @@ const performanceData = [
   { date: "2024-04", totalBalance: 5420, totalDeposits: 6000 },
   { date: "2024-05", totalBalance: 6680, totalDeposits: 6000 },
   { date: "2024-06", totalBalance: 6890, totalDeposits: 6000 },
-];
-
-const portfolioData = [
-  { name: "Aave USDC", value: 2563.5, color: "#3B82F6" },
-  { name: "Yearn v3", value: 1847.2, color: "#8B5CF6" },
-  { name: "Radiant Capital", value: 1250.8, color: "#10B981" },
-  { name: "Beefy Finance", value: 1228.5, color: "#F59E0B" },
 ];
 
 const chartConfig = {
@@ -54,11 +49,17 @@ const COLORS = ["#3b82f6", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
 
 const PerformanceView = () => {
   const { walletConnection } = useAgoric();
+  const { currentBalance, totalDeposits, totalYield, positions } =
+    usePortfolioStore();
   const totalTVL = "$2.8B";
   const totalYieldEarned = "$890.00";
-  const currentBalance = 6890.0;
-  const totalDeposits = 6000.0;
-  const totalYield = currentBalance - totalDeposits;
+
+  // Generate portfolio data from store positions
+  const portfolioData = positions.map((position, index) => ({
+    name: `${position.protocol} ${position.name}`,
+    value: position.value,
+    color: COLORS[index % COLORS.length],
+  }));
 
   const WalletConnectPrompt = () => (
     <Card className="bg-slate-800/40 border-slate-600">
@@ -71,10 +72,7 @@ const PerformanceView = () => {
           Connect your wallet to view your personal performance metrics and
           portfolio analytics
         </p>
-        <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 px-8 py-3 text-lg">
-          <Wallet className="w-5 h-5 mr-2" />
-          Connect Wallet
-        </Button>
+        <WalletConnection />
       </CardContent>
     </Card>
   );
