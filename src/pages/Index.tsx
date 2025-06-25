@@ -12,6 +12,7 @@ import WalletConnection from "@/components/WalletConnection";
 import StrategyDashboard from "@/components/StrategyDashboard";
 import DepositInterface from "@/components/DepositInterface";
 import PerformanceView from "@/components/PerformanceView";
+import AaveV3BalanceViewer from "@/components/AaveV3BalanceViewer";
 import { Wallet, TrendingUp, Shield, Zap } from "lucide-react";
 
 const Index = () => {
@@ -72,6 +73,17 @@ const Index = () => {
           >
             Performance
           </Button>
+          <Button
+            variant={currentView === "aave-v3" ? "default" : "outline"}
+            onClick={() => setCurrentView("aave-v3")}
+            className={
+              currentView === "aave-v3"
+                ? "bg-orange-600 hover:bg-orange-700 text-white border-0"
+                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+            }
+          >
+            Aave V3 (Testing)
+          </Button>
         </div>
 
         {/* Content */}
@@ -97,6 +109,8 @@ const Index = () => {
         )}
 
         {currentView === "performance" && <PerformanceView />}
+
+        {currentView === "aave-v3" && <AaveV3BalanceViewer />}
       </main>
     </div>
   );
