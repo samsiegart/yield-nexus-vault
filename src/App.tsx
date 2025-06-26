@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import { useAgoric } from "@agoric/react-components";
 import { usePortfolioStore } from "./store";
 import { fetchPortfolioData } from "./queries/portfolioQueries";
+import { FeedbackButton } from "./components/FeedbackButton";
 import "@agoric/react-components/dist/style.css";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const InnerApp = () => {
         <TooltipProvider>
           <Toaster />
           <Sonner />
+          <FeedbackButton />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
