@@ -12,7 +12,11 @@ RUN yarn install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the application with environment variables
+# Environment variables starting with VITE_ are embedded at build time
+ARG VITE_FEEDBACK_ENDPOINT
+ENV VITE_FEEDBACK_ENDPOINT=$VITE_FEEDBACK_ENDPOINT
+
 RUN yarn build
 
 # Production stage

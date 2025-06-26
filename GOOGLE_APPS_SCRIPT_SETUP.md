@@ -69,19 +69,34 @@ function doGet(e) {
 4. Click **Deploy**
 5. Copy the **Web app URL** that appears
 
-## Step 5: Update the React Component
-1. Open `src/components/FeedbackForm.tsx`
-2. Replace `YOUR_DEPLOYMENT_ID` in the `GOOGLE_SCRIPT_URL` with your actual deployment URL
-3. The URL will look like: `https://script.google.com/macros/s/AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z/exec`
+## Step 5: Configure Environment Variables
 
-# https://script.google.com/a/macros/agoric.com/s/AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z/exec
-# AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z
+### For Development
+1. Create a `.env.local` file in your project root
+2. Add your Google Apps Script URL:
+   ```
+   VITE_FEEDBACK_ENDPOINT=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec
+   ```
+3. Replace `YOUR_DEPLOYMENT_ID` with your actual deployment ID from Step 4
+
+### For Production
+1. Set the environment variable in your deployment platform:
+   - **Fly.io**: `fly secrets set VITE_FEEDBACK_ENDPOINT=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec`
+   - **Docker**: `docker build --build-arg VITE_FEEDBACK_ENDPOINT=https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec .`
+   - **Vercel**: Add in dashboard or use `vercel env add VITE_FEEDBACK_ENDPOINT`
+   - **Netlify**: Add in site settings or use `netlify env:set VITE_FEEDBACK_ENDPOINT`
+
+### Example URLs
+- Production URL format: `https://script.google.com/macros/s/AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z/exec`
+- Google Workspace URL format: `https://script.google.com/a/macros/yourdomain.com/s/DEPLOYMENT_ID/exec`
 
 ## Step 6: Test the Integration
-1. Deploy your app
+1. Start your development server: `npm run dev` or `yarn dev`
 2. Click the feedback button
 3. Fill out and submit the form
 4. Check your Google Sheet to see if the data appears
+
+**Note**: If the environment variable is not set, the application will use the default production endpoint. For development and testing, it's recommended to set up your own Google Apps Script endpoint.
 
 ## Security Notes
 - The script accepts data from anyone (no authentication)

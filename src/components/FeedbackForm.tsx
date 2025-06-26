@@ -45,8 +45,9 @@ export const FeedbackForm = ({ isOpen, onClose }: FeedbackFormProps) => {
   const onSubmit = async (data: FeedbackFormData) => {
     setIsSubmitting(true);
     try {
-      // Google Apps Script Web App URL - will be replaced with actual URL
-      const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z/exec';
+      // Google Apps Script Web App URL from environment variables with fallback
+      const GOOGLE_SCRIPT_URL = import.meta.env.VITE_FEEDBACK_ENDPOINT || 
+        'https://script.google.com/macros/s/AKfycbx7nd2e1xq-gl0jXZ0NGddN6afeBzcB8giS9mvUPr9UuwtX8aA7XVJKuFPZ3gi23P5Z/exec';
       
       const payload = {
         ...data,
