@@ -6,7 +6,7 @@ const WalletConnection = () => {
 
   useEffect(() => {
     if (purses) {
-      console.log("Purse Balances:", purses);
+      console.debug("Purse Balances:", purses);
     }
   }, [purses]);
 
