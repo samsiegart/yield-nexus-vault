@@ -39,7 +39,7 @@ const Index = () => {
                 variant="outline"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Ask YieldBot
+                Ask Max
               </Button>
               <WalletConnection />
             </div>
@@ -115,7 +115,7 @@ const Index = () => {
       {showChatbot && (
         <div className="iframe-container">
           <div className="chat-header">
-            <h3 className="chat-title">Ask YieldBot</h3>
+            <h3 className="chat-title">Ask Max</h3>
             <Button
               onClick={() => setShowChatbot(false)}
               variant="ghost"
@@ -125,9 +125,9 @@ const Index = () => {
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <iframe 
+          <iframe
             ref={chatIframeRef}
-            src="https://chat.agoric.net/" 
+            src="https://chat.agoric.net/"
             title="Agoric Community Chat"
             className="chat-iframe"
             sandbox="allow-scripts allow-same-origin allow-forms"
