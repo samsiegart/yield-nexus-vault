@@ -43,6 +43,11 @@ import { useAgoric, AmountInput } from "@agoric/react-components";
 import WalletConnection from "@/components/WalletConnection";
 import { usePortfolioStore } from "@/store";
 import { stringifyValue } from "@agoric/web-components";
+import {
+  makeAgoricChainStorageWatcher,
+  AgoricChainStoragePathKind as Kind,
+} from "@agoric/rpc";
+import { useToast } from "@/hooks/use-toast";
 
 interface Strategy {
   id: string;
@@ -58,20 +63,14 @@ interface DepositInterfaceProps {
   onUpdateStrategies: (strategies: Strategy[]) => void;
 }
 
+// Supported strategies – others will be added later
 const allStrategies: Strategy[] = [
   {
     id: "aave-eth",
     protocol: "AAVE",
-    name: "USAV",
+    name: "USDC",
     apy: 14.0,
     chain: "Ethereum",
-  },
-  {
-    id: "beefy-polygon",
-    protocol: "Beefy",
-    name: "USDC",
-    apy: 10.0,
-    chain: "Polygon",
   },
   {
     id: "compound-eth",
@@ -81,25 +80,11 @@ const allStrategies: Strategy[] = [
     chain: "Ethereum",
   },
   {
-    id: "yearn-eth",
-    protocol: "Yearn",
-    name: "USDC Vault",
-    apy: 8.5,
-    chain: "Ethereum",
-  },
-  {
-    id: "curve-eth",
-    protocol: "Curve",
-    name: "3Pool",
-    apy: 6.2,
-    chain: "Ethereum",
-  },
-  {
-    id: "convex-eth",
-    protocol: "Convex",
-    name: "USDC",
-    apy: 12.5,
-    chain: "Ethereum",
+    id: "noble-usdn",
+    protocol: "Noble",
+    name: "USDN",
+    apy: 0,
+    chain: "Noble",
   },
 ];
 
@@ -115,8 +100,13 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   selectedStrategies,
   onUpdateStrategies,
 }) => {
-  const { walletConnection, purses } = useAgoric();
+  const {
+    walletConnection,
+    purses,
+    chainStorageWatcher: watcher,
+  } = useAgoric();
   const { positions } = usePortfolioStore();
+  const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState("agoric");
   const [withdrawAmounts, setWithdrawAmounts] = useState<{
     [key: string]: number;
@@ -130,6 +120,41 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   );
   const [totalDepositAmount, setTotalDepositAmount] = useState<bigint>(0n);
   const [balanceEvenly, setBalanceEvenly] = useState(true);
+
+  // ------------------------------------------------------------------
+  // OfferUp (ymax0) chain data
+  // ------------------------------------------------------------------
+  const [ymaxInstance, setYmaxInstance] = useState<unknown>();
+  const [brands, setBrands] = useState<Record<string, unknown>>();
+
+  // Initialise a chain storage watcher once on mount
+  useEffect(() => {
+    // Watch for ymax0/offerUp instance
+    const stopInstances = watcher.watchLatest<Array<[string, unknown]>>(
+      [Kind.Data, "published.agoricNames.instance"],
+      (entries) => {
+        const found = entries.find(([name]) => name === "ymax0");
+        if (found) {
+          console.debug("ymax0 instance found", found);
+          setYmaxInstance(found[1]);
+        }
+      }
+    );
+
+    // Watch for brands
+    const stopBrands = watcher.watchLatest<Array<[string, unknown]>>(
+      [Kind.Data, "published.agoricNames.brand"],
+      (entries) => {
+        console.debug("brands found", entries);
+        setBrands(Object.fromEntries(entries));
+      }
+    );
+
+    return () => {
+      stopInstances();
+      stopBrands();
+    };
+  }, [watcher]);
 
   // Get USDC balance from purses
   const getUSDCBalance = () => {
@@ -275,6 +300,70 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       const newAmount = rebalanceAmounts[position.id] || 0;
       return Math.abs(currentAmount - newAmount) > 0.01;
     });
+  };
+
+  //-------------------------------------------------------------------
+  // Deposit – makeOffer to OfferUp
+  //-------------------------------------------------------------------
+  const handleConfirmDeposit = () => {
+    if (!walletConnection) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first.",
+      });
+      return;
+    }
+    if (!ymaxInstance) {
+      toast({
+        title: "Contract not found",
+        description: "ymax instance not available on chain.",
+      });
+      return;
+    }
+    if (!brands?.USDC || !brands?.PoC25) {
+      toast({
+        title: "Missing brand",
+        description: "Required brands (USDC / PoC25) are not available.",
+      });
+      return;
+    }
+    if (totalDepositAmount === 0n) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a non-zero amount.",
+      });
+      return;
+    }
+
+    const offerId = Date.now();
+    const giveValue = totalDepositAmount;
+    const give = {
+      USDN: { brand: brands.USDC, value: giveValue },
+      Access: { brand: brands.PoC25, value: 1n },
+    };
+
+    try {
+      walletConnection.makeOffer(
+        {
+          source: "contract",
+          instance: ymaxInstance as unknown,
+          publicInvitationMaker: "makeOpenPortfolioInvitation",
+        },
+        { give },
+        { usdnOut: (giveValue * 99n) / 100n },
+        (update: { status: string; data?: unknown }) => {
+          console.log("Deposit offer update", update);
+          toast({
+            title: `Offer ${update.status}`,
+            description: JSON.stringify(update.data ?? {}, null, 2),
+          });
+        },
+        offerId
+      );
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      toast({ title: "Offer error", description: message });
+    }
   };
 
   const WalletConnectPrompt = () => (
@@ -591,6 +680,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                       totalPercentage !== 100 ||
                       isAmountInvalid
                     }
+                    onClick={handleConfirmDeposit}
                   >
                     Confirm Deposit
                     <ArrowRight className="w-5 h-5 ml-2" />
