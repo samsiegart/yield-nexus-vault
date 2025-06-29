@@ -2,6 +2,9 @@ app = 'ymax-poc-ui'
 primary_region = 'ord'
 console_command = '/bin/bash'
 
+[[domains]]
+  name = 'ymax.app'
+
 [build]
 
 [env]
