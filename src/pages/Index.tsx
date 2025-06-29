@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -12,13 +12,34 @@ import WalletConnection from "@/components/WalletConnection";
 import StrategyDashboard from "@/components/StrategyDashboard";
 import DepositInterface from "@/components/DepositInterface";
 import PerformanceView from "@/components/PerformanceView";
-import { Wallet, TrendingUp, Shield, Zap, MessageCircle, X } from "lucide-react";
+import OpportunitiesView from "@/components/OpportunitiesView";
+import {
+  Wallet,
+  TrendingUp,
+  Shield,
+  Zap,
+  MessageCircle,
+  X,
+} from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const Index = () => {
   const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [currentView, setCurrentView] = useState("dashboard");
   const [showChatbot, setShowChatbot] = useState(false);
   const chatIframeRef = useRef(null);
+  const location = useLocation();
+
+  // Sync view with navigation state if provided
+  useEffect(() => {
+    const view = (location.state as { view?: string } | null)?.view;
+    if (
+      view &&
+      ["dashboard", "deposit", "performance", "opportunities"].includes(view)
+    ) {
+      setCurrentView(view);
+    }
+  }, [location.state]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-purple-900">
@@ -39,7 +60,7 @@ const Index = () => {
                 variant="outline"
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Ask YieldBot
+                Ask Max
               </Button>
               <WalletConnection />
             </div>
@@ -74,15 +95,15 @@ const Index = () => {
             Manage Positions
           </Button>
           <Button
-            variant={currentView === "performance" ? "default" : "outline"}
-            onClick={() => setCurrentView("performance")}
+            variant={currentView === "opportunities" ? "default" : "outline"}
+            onClick={() => setCurrentView("opportunities")}
             className={
-              currentView === "performance"
-                ? "bg-green-600 hover:bg-green-700 text-white border-0"
+              currentView === "opportunities"
+                ? "bg-yellow-600 hover:bg-yellow-700 text-white border-0"
                 : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
             }
           >
-            Performance
+            All Opportunities
           </Button>
         </div>
 
@@ -98,6 +119,7 @@ const Index = () => {
               setCurrentView("deposit");
             }}
             onNavigateToDeposit={() => setCurrentView("deposit")}
+            onNavigateToOpportunities={() => setCurrentView("opportunities")}
           />
         )}
 
@@ -109,13 +131,15 @@ const Index = () => {
         )}
 
         {currentView === "performance" && <PerformanceView />}
+
+        {currentView === "opportunities" && <OpportunitiesView />}
       </main>
 
       {/* Chatbot */}
       {showChatbot && (
         <div className="iframe-container">
           <div className="chat-header">
-            <h3 className="chat-title">Ask YieldBot</h3>
+            <h3 className="chat-title">Ask Max</h3>
             <Button
               onClick={() => setShowChatbot(false)}
               variant="ghost"
@@ -125,9 +149,9 @@ const Index = () => {
               <X className="w-4 h-4" />
             </Button>
           </div>
-          <iframe 
+          <iframe
             ref={chatIframeRef}
-            src="https://chat.agoric.net/" 
+            src="https://chat.agoric.net/"
             title="Agoric Community Chat"
             className="chat-iframe"
             sandbox="allow-scripts allow-same-origin allow-forms"
