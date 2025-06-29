@@ -17,7 +17,7 @@ COPY . .
 ARG VITE_FEEDBACK_ENDPOINT
 ENV VITE_FEEDBACK_ENDPOINT=$VITE_FEEDBACK_ENDPOINT
 
-RUN yarn build
+RUN NODE_OPTIONS=--max-old-space-size=8192 yarn build
 
 # Production stage
 FROM nginx:alpine
