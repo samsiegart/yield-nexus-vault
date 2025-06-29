@@ -13,6 +13,7 @@ import StrategyDashboard from "@/components/StrategyDashboard";
 import DepositInterface from "@/components/DepositInterface";
 import PerformanceView from "@/components/PerformanceView";
 import OpportunitiesView from "@/components/OpportunitiesView";
+import { useAgoric } from "@agoric/react-components";
 import {
   Wallet,
   TrendingUp,
@@ -29,6 +30,7 @@ const Index = () => {
   const [showChatbot, setShowChatbot] = useState(false);
   const chatIframeRef = useRef(null);
   const location = useLocation();
+  const { address } = useAgoric();
 
   // Sync view with navigation state if provided
   useEffect(() => {
@@ -151,7 +153,15 @@ const Index = () => {
           </div>
           <iframe
             ref={chatIframeRef}
-            src="https://chat.agoric.net/"
+            src={
+              address
+                ? `https://chat.agoric.net?context=${encodeURIComponent(
+                    JSON.stringify({
+                      address
+                    })
+                  )}`
+                : "https://chat.agoric.net/"
+            }
             title="Agoric Community Chat"
             className="chat-iframe"
             sandbox="allow-scripts allow-same-origin allow-forms"
