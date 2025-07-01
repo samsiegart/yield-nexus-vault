@@ -320,10 +320,10 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       });
       return;
     }
-    if (!brands?.USDC || !brands?.PoC25) {
+    if (!brands?.USDC) {
       toast({
         title: "Missing brand",
-        description: "Required brands (USDC / PoC25) are not available.",
+        description: "Required brand (USDC) is not available.",
       });
       return;
     }
@@ -335,11 +335,33 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       return;
     }
 
+    // Get brand from purses
+    // XXX: Workaround for mismatching brand board ID in agoricNames.brand
+    // XXX: Remove this once the issue is fixed
+    const getPoc26Brand = () => {
+      if (!purses) return null;
+
+      // Look for PoC26 purse in the purses
+      const poc26Purse = purses.find(
+        (purse) => purse.brandPetname?.toLowerCase() === "poc26"
+      );
+
+      return poc26Purse?.brand;
+    };
+    const poc26Brand = getPoc26Brand();
+    if (!poc26Brand) {
+      toast({
+        title: "Missing brand",
+        description: "Required brand (PoC26) is not available in purses.",
+      });
+      return;
+    }
+
     const offerId = Date.now();
     const giveValue = totalDepositAmount;
     const give = {
       USDN: { brand: brands.USDC, value: giveValue },
-      Access: { brand: brands.PoC25, value: 1n },
+      Access: { brand: poc26Brand, value: 1n },
     };
 
     try {
