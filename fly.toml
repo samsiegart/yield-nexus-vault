@@ -14,14 +14,6 @@ console_command = '/bin/bash'
   strategy = 'rolling'
   max_unavailable = 1
 
-[http_service]
-  internal_port = 3000
-  force_https = true
-  auto_stop_machines = 'suspend'
-  auto_start_machines = true
-  min_machines_running = 1
-  processes = ['app']
-
 [[services]]
   protocol = 'tcp'
   internal_port = 3000
@@ -40,22 +32,6 @@ console_command = '/bin/bash'
     type = 'connections'
     hard_limit = 25
     soft_limit = 20
-
-  [[services.tcp_checks]]
-    interval = '30s'
-    timeout = '10s'
-    grace_period = '30s'
-    restart_limit = 3
-
-  [[services.http_checks]]
-    interval = '30s'
-    timeout = '10s'
-    grace_period = '30s'
-    method = 'GET'
-    path = '/health'
-    protocol = 'http'
-    tls_skip_verify = false
-    restart_limit = 3
 
 [[vm]]
   memory = '1gb'
