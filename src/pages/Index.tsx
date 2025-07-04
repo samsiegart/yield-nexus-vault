@@ -32,6 +32,14 @@ const Index = () => {
   const location = useLocation();
   const { address } = useAgoric();
 
+  let queryParams = `?title=${encodeURIComponent("Max Chat")}`;
+  queryParams += `&theme=${encodeURIComponent("dark-blue")}`;
+  if (address) {
+    queryParams += `&context=${encodeURIComponent(JSON.stringify({ address }))}`;
+  }
+  queryParams += `&hideReasoning=${encodeURIComponent("true")}`;
+  
+
   // Sync view with navigation state if provided
   useEffect(() => {
     const view = (location.state as { view?: string } | null)?.view;
@@ -153,15 +161,7 @@ const Index = () => {
           </div>
           <iframe
             ref={chatIframeRef}
-            src={
-              address
-                ? `https://chat.agoric.net?context=${encodeURIComponent(
-                    JSON.stringify({
-                      address
-                    })
-                  )}`
-                : "https://chat.agoric.net/"
-            }
+            src={`https://chat.agoric.net${queryParams}`}
             title="Agoric Community Chat"
             className="chat-iframe"
             sandbox="allow-scripts allow-same-origin allow-forms"
