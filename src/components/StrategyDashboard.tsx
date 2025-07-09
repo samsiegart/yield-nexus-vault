@@ -18,7 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { ArrowRight, Wallet, Plus } from "lucide-react";
+import { ArrowRight, Wallet, Plus, Star, TrendingUp } from "lucide-react";
 import { useAgoric } from "@agoric/react-components";
 import WalletConnection from "@/components/WalletConnection";
 import { usePortfolioStore } from "@/store";
@@ -232,12 +232,19 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
     defaultAmt: number;
   } | null>(null);
 
+  // Helper function to determine badge color based on target vs actual percentage
+  const getPercentageBadgeColor = (actual: number, target: number) => {
+    return actual === target
+      ? "bg-green-500/20 text-green-400 border-green-500/30"
+      : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+  };
+
   return (
     <div className="space-y-8">
       {/* Portfolio Balance Section */}
       <div>
         <h2 className="text-2xl font-bold text-white mb-6">
-          Your Portfolio Balance
+          Portfolio Overview
         </h2>
 
         <Card className="bg-slate-800/60 border-slate-700">
@@ -451,8 +458,9 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
       {/* Yield Opportunities */}
       <div>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-white">
-            Top Yield Opportunities
+          <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+            <Star className="w-6 h-6 text-yellow-400" />
+            <span>Top Opportunities</span>
           </h2>
           <Button
             onClick={onNavigateToOpportunities}
@@ -514,8 +522,9 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
       {suggestions.length > 0 && (
         <div className="space-y-4 mt-8">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-2xl font-bold text-white">
-              Optimization Suggestions
+            <h2 className="text-2xl font-bold text-white flex items-center space-x-2">
+              <TrendingUp className="w-6 h-6 text-yellow-400" />
+              <span>Optimization Suggestions</span>
             </h2>
           </div>
 
@@ -573,9 +582,15 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
       {/* Distribution (Your Positions) */}
       <div>
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Your Active Positions
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-white">Current Portfolio</h2>
+          <Button
+            onClick={onNavigateToDeposit}
+            className="bg-blue-600 hover:bg-blue-700 text-white border-0"
+          >
+            Manage
+          </Button>
+        </div>
 
         {!walletConnection ? (
           <Card className="bg-slate-800/60 border-slate-700">
@@ -591,48 +606,80 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {positions.map((position) => (
-              <Card
-                key={position.id}
-                className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
-                onClick={() => onNavigateToDeposit()}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-lg font-semibold text-white">
-                      {position.protocol}
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-slate-700 text-slate-300"
+          <Card className="bg-slate-800/60 border-slate-700">
+            <CardContent className="overflow-x-auto">
+              <table className="min-w-full text-sm text-slate-300">
+                <thead>
+                  <tr className="border-b border-slate-700 text-slate-400 text-left">
+                    <th className="py-3 pr-4">Protocol</th>
+                    <th className="py-3 pr-4">Pool</th>
+                    <th className="py-3 pr-4">Chain</th>
+                    <th className="py-3 pr-4">APY</th>
+                    <th className="py-3 pr-4">Target %</th>
+                    <th className="py-3 pr-4">Actual %</th>
+                    <th className="py-3 pr-4">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {positions.map((position) => (
+                    <tr
+                      key={position.id}
+                      className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer"
+                      onClick={() => onNavigateToDeposit()}
                     >
-                      {position.chain}
-                    </Badge>
-                  </div>
-                  <div className="text-sm text-slate-300 mb-2">
-                    {position.name}
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <div className="text-xl font-bold text-green-400">
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center space-x-2">
+                          {protocolIcons[position.protocol] ? (
+                            <img
+                              src={protocolIcons[position.protocol]}
+                              alt={position.protocol}
+                              className="w-5 h-5 object-contain"
+                            />
+                          ) : (
+                            <Badge>{position.protocol.charAt(0)}</Badge>
+                          )}
+                          <span>{position.protocol}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4">{position.name}</td>
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center space-x-2">
+                          {chainIcons[position.chain] && (
+                            <img
+                              src={chainIcons[position.chain]}
+                              alt={position.chain}
+                              className="w-5 h-5 object-contain"
+                            />
+                          )}
+                          <span>{position.chain}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4 font-semibold text-green-400">
                         {position.apy}%
-                      </div>
-                      <div className="text-xs text-slate-400">APY</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-white">
-                        {position.percentage}%
-                      </div>
-                      <div className="text-sm text-slate-400">
+                      </td>
+                      <td className="py-3 pr-4 font-semibold text-white">
+                        {position.targetPercentage}%
+                      </td>
+                      <td className="py-3 pr-4">
+                        <Badge
+                          variant="secondary"
+                          className={`${getPercentageBadgeColor(
+                            position.percentage,
+                            position.targetPercentage
+                          )} text-xs`}
+                        >
+                          {position.percentage}%
+                        </Badge>
+                      </td>
+                      <td className="py-3 pr-4 font-semibold text-white">
                         ${position.value.toLocaleString()}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </CardContent>
+          </Card>
         )}
       </div>
 
