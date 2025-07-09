@@ -8,6 +8,7 @@ export interface Position {
   chain: string;
   value: number;
   percentage: number;
+  targetPercentage: number;
   spread?: number;
 }
 

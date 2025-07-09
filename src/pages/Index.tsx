@@ -13,7 +13,10 @@ import StrategyDashboard from "@/components/StrategyDashboard";
 import DepositInterface from "@/components/DepositInterface";
 import PerformanceView from "@/components/PerformanceView";
 import OpportunitiesView from "@/components/OpportunitiesView";
+import ActivityView from "@/components/ActivityView";
+import CreatePortfolioView from "@/components/CreatePortfolioView";
 import { useAgoric } from "@agoric/react-components";
+import { usePortfolioStore } from "@/store";
 import {
   Wallet,
   TrendingUp,
@@ -21,6 +24,7 @@ import {
   Zap,
   MessageCircle,
   X,
+  Code,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
@@ -28,24 +32,37 @@ const Index = () => {
   const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [currentView, setCurrentView] = useState("dashboard");
   const [showChatbot, setShowChatbot] = useState(false);
+  const [debugHasPositions, setDebugHasPositions] = useState(true);
   const chatIframeRef = useRef(null);
   const location = useLocation();
   const { address } = useAgoric();
+  const { positions } = usePortfolioStore();
+
+  // Determine if we should show onboarding view
+  const shouldShowOnboarding =
+    !address || !debugHasPositions || positions.length === 0;
 
   let queryParams = `?title=${encodeURIComponent("Max Chat")}`;
   queryParams += `&theme=${encodeURIComponent("dark-blue")}`;
   if (address) {
-    queryParams += `&context=${encodeURIComponent(JSON.stringify({ address }))}`;
+    queryParams += `&context=${encodeURIComponent(
+      JSON.stringify({ address })
+    )}`;
   }
   queryParams += `&hideReasoning=${encodeURIComponent("true")}`;
-  
 
   // Sync view with navigation state if provided
   useEffect(() => {
     const view = (location.state as { view?: string } | null)?.view;
     if (
       view &&
-      ["dashboard", "deposit", "performance", "opportunities"].includes(view)
+      [
+        "dashboard",
+        "deposit",
+        "performance",
+        "opportunities",
+        "activity",
+      ].includes(view)
     ) {
       setCurrentView(view);
     }
@@ -65,6 +82,15 @@ const Index = () => {
             </div>
             <div className="flex items-center space-x-3">
               <Button
+                onClick={() => setDebugHasPositions(!debugHasPositions)}
+                className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                variant="outline"
+                size="sm"
+              >
+                <Code className="w-4 h-4 mr-2" />
+                {debugHasPositions ? "Has Positions" : "No Positions"}
+              </Button>
+              <Button
                 onClick={() => setShowChatbot(!showChatbot)}
                 className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
                 variant="outline"
@@ -80,69 +106,92 @@ const Index = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {/* Navigation */}
-        <div className="flex space-x-4 mb-8">
-          <Button
-            variant={currentView === "dashboard" ? "default" : "outline"}
-            onClick={() => setCurrentView("dashboard")}
-            className={
-              currentView === "dashboard"
-                ? "bg-blue-600 hover:bg-blue-700 text-white border-0"
-                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-            }
-          >
-            Strategies
-          </Button>
-          <Button
-            variant={currentView === "deposit" ? "default" : "outline"}
-            onClick={() => setCurrentView("deposit")}
-            className={
-              currentView === "deposit"
-                ? "bg-purple-600 hover:bg-purple-700 text-white border-0"
-                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-            }
-          >
-            Manage Positions
-          </Button>
-          <Button
-            variant={currentView === "opportunities" ? "default" : "outline"}
-            onClick={() => setCurrentView("opportunities")}
-            className={
-              currentView === "opportunities"
-                ? "bg-yellow-600 hover:bg-yellow-700 text-white border-0"
-                : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-            }
-          >
-            All Opportunities
-          </Button>
-        </div>
+        {shouldShowOnboarding ? (
+          <CreatePortfolioView />
+        ) : (
+          <>
+            {/* Navigation */}
+            <div className="flex space-x-4 mb-8">
+              <Button
+                variant={currentView === "dashboard" ? "default" : "outline"}
+                onClick={() => setCurrentView("dashboard")}
+                className={
+                  currentView === "dashboard"
+                    ? "bg-blue-600 hover:bg-blue-700 text-white border-0"
+                    : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                }
+              >
+                Strategies
+              </Button>
+              <Button
+                variant={currentView === "deposit" ? "default" : "outline"}
+                onClick={() => setCurrentView("deposit")}
+                className={
+                  currentView === "deposit"
+                    ? "bg-purple-600 hover:bg-purple-700 text-white border-0"
+                    : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                }
+              >
+                Manage Positions
+              </Button>
+              <Button
+                variant={
+                  currentView === "opportunities" ? "default" : "outline"
+                }
+                onClick={() => setCurrentView("opportunities")}
+                className={
+                  currentView === "opportunities"
+                    ? "bg-yellow-600 hover:bg-yellow-700 text-white border-0"
+                    : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                }
+              >
+                All Opportunities
+              </Button>
+              <Button
+                variant={currentView === "activity" ? "default" : "outline"}
+                onClick={() => setCurrentView("activity")}
+                className={
+                  currentView === "activity"
+                    ? "bg-green-600 hover:bg-green-700 text-white border-0"
+                    : "bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                }
+              >
+                Activity
+              </Button>
+            </div>
 
-        {/* Content */}
-        {currentView === "dashboard" && (
-          <StrategyDashboard
-            onSelectStrategy={(strategy) => {
-              setSelectedStrategies([...selectedStrategies, strategy]);
-              setCurrentView("deposit");
-            }}
-            onSelectPresetStrategies={(strategies) => {
-              setSelectedStrategies(strategies);
-              setCurrentView("deposit");
-            }}
-            onNavigateToDeposit={() => setCurrentView("deposit")}
-            onNavigateToOpportunities={() => setCurrentView("opportunities")}
-          />
+            {/* Content */}
+            {currentView === "dashboard" && (
+              <StrategyDashboard
+                onSelectStrategy={(strategy) => {
+                  setSelectedStrategies([...selectedStrategies, strategy]);
+                  setCurrentView("deposit");
+                }}
+                onSelectPresetStrategies={(strategies) => {
+                  setSelectedStrategies(strategies);
+                  setCurrentView("deposit");
+                }}
+                onNavigateToDeposit={() => setCurrentView("deposit")}
+                onNavigateToOpportunities={() =>
+                  setCurrentView("opportunities")
+                }
+              />
+            )}
+
+            {currentView === "deposit" && (
+              <DepositInterface
+                selectedStrategies={selectedStrategies}
+                onUpdateStrategies={setSelectedStrategies}
+              />
+            )}
+
+            {currentView === "performance" && <PerformanceView />}
+
+            {currentView === "opportunities" && <OpportunitiesView />}
+
+            {currentView === "activity" && <ActivityView />}
+          </>
         )}
-
-        {currentView === "deposit" && (
-          <DepositInterface
-            selectedStrategies={selectedStrategies}
-            onUpdateStrategies={setSelectedStrategies}
-          />
-        )}
-
-        {currentView === "performance" && <PerformanceView />}
-
-        {currentView === "opportunities" && <OpportunitiesView />}
       </main>
 
       {/* Chatbot */}

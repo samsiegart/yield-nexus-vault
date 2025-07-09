@@ -9,6 +9,7 @@ export const mockPositions: Position[] = [
     chain: "Ethereum",
     value: 43437,
     percentage: 30,
+    targetPercentage: 25,
     spread: 30,
   },
   {
@@ -19,6 +20,7 @@ export const mockPositions: Position[] = [
     chain: "Polygon",
     value: 0,
     percentage: 0,
+    targetPercentage: 0,
     spread: 0,
   },
   {
@@ -29,6 +31,7 @@ export const mockPositions: Position[] = [
     chain: "Ethereum",
     value: 57916,
     percentage: 40,
+    targetPercentage: 40,
     spread: 40,
   },
   {
@@ -39,6 +42,7 @@ export const mockPositions: Position[] = [
     chain: "Ethereum",
     value: 43437,
     percentage: 30,
+    targetPercentage: 35,
     spread: 30,
   },
 ];
