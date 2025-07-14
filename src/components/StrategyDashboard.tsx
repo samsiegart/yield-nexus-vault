@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -30,6 +30,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EnterStrategyModal from "@/components/EnterStrategyModal";
+import { BASE_STRATEGIES, BaseStrategy } from "@/constants/strategies";
+import { useStrategyMetrics } from "@/hooks/useStrategyMetrics";
+import { formatApy } from "@/lib/utils";
 
 interface Strategy {
   id: string;
@@ -129,13 +132,14 @@ const protocolIcons: Record<string, string> = {
   Yearn: "/icons/yearn.jpg",
   Curve: "/icons/curve.png",
   Convex: "/icons/convex.png",
+  Noble: "/icons/USDN.svg",
   Boost: "", // placeholder
 };
 
 const chainIcons: Record<string, string> = {
   Ethereum: "/icons/ethereum.png",
   Polygon: "/icons/polygon.png",
-  Noble: "",
+  Noble: "/icons/noble.png",
 };
 
 const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
@@ -145,7 +149,8 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onNavigateToOpportunities,
 }) => {
   const { walletConnection, purses } = useAgoric();
-  const { currentBalance, totalDeposits, positions } = usePortfolioStore();
+  const { currentBalance, totalDeposits, positions, dataMode } =
+    usePortfolioStore();
   const gainsValue = currentBalance - totalDeposits;
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -157,6 +162,9 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   const [enterOpen, setEnterOpen] = useState(false);
   const [selectedEnterStrategy, setSelectedEnterStrategy] =
     useState<Strategy | null>(null);
+
+  const availableStrategies: BaseStrategy[] =
+    dataMode === "real-data" ? BASE_STRATEGIES : (strategies as any);
 
   const handleQuickWithdraw = () => {
     console.log(`Withdrawing $${withdrawAmount} USDC`);
@@ -172,9 +180,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   };
 
   // Derive the top 3 strategies with the highest APY
-  const topStrategies = [...strategies]
-    .sort((a, b) => b.apy - a.apy)
-    .slice(0, 3);
+  const topStrategies = availableStrategies.slice(0, 3);
 
   // --------------------- Deposit source selection ---------------------
   const supportedChains = [
@@ -218,8 +224,9 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
           subtitle:
             "Aave currently offers higher APY than your Compound position",
           gain: 1234,
-          sourceId: "compound-eth",
-          targetId: "aave-eth",
+          sourceId:
+            dataMode === "real-data" ? "compound-eth-real" : "compound-eth",
+          targetId: dataMode === "real-data" ? "aave-eth-real" : "aave-eth",
           percent: 15,
         },
       ].filter((s) => positions.find((p) => p.id === s.sourceId))
@@ -498,7 +505,21 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-green-400">
-                    {strategy.apy}%
+                    {dataMode === "real-data"
+                      ? (() => {
+                          const { data, isLoading } = useStrategyMetrics(
+                            strategy.id
+                          );
+                          if (isLoading || data?.apy === undefined) {
+                            return (
+                              <div className="flex items-center">
+                                <div className="animate-spin h-4 w-4 border-2 border-green-400/60 border-t-transparent rounded-full" />
+                              </div>
+                            );
+                          }
+                          return formatApy(data.apy);
+                        })()
+                      : formatApy((strategy as any).apy)}
                   </div>
                 </div>
                 <div className="flex-1" />
@@ -529,7 +550,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
           </div>
 
           {suggestions.map((sugg) => {
-            const targetStrat = strategies.find(
+            const targetStrat = availableStrategies.find(
               (st) => st.id === sugg.targetId
             );
             const sourcePos = positions.find((p) => p.id === sugg.sourceId);
@@ -655,7 +676,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                         </div>
                       </td>
                       <td className="py-3 pr-4 font-semibold text-green-400">
-                        {position.apy}%
+                        {formatApy(position.apy)}
                       </td>
                       <td className="py-3 pr-4 font-semibold text-white">
                         {position.targetPercentage}%

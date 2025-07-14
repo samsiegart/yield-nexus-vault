@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+export type DataMode = "no-positions" | "has-positions" | "real-data";
+
 export interface Position {
   id: string;
   protocol: string;
@@ -21,19 +23,26 @@ export interface PortfolioData {
   isLoading: boolean;
   isLoaded: boolean;
   error: string | null;
+  dataMode: DataMode;
+  isLoadingAprs: boolean;
 }
 
 interface PortfolioStore extends PortfolioData {
   // Actions
   setLoading: (loading: boolean) => void;
+  setLoadingAprs: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setPortfolioData: (
     data: Omit<PortfolioData, "isLoading" | "isLoaded" | "error">
   ) => void;
+  setDataMode: (mode: DataMode) => void;
   reset: () => void;
+  resetData: () => void;
   updatePosition: (positionId: string, updates: Partial<Position>) => void;
   addPosition: (position: Position) => void;
   removePosition: (positionId: string) => void;
+  setPositions: (positions: Position[]) => void;
+  setCurrentBalance: (balance: number) => void;
 }
 
 const initialState: PortfolioData = {
@@ -45,12 +54,16 @@ const initialState: PortfolioData = {
   isLoading: false,
   isLoaded: false,
   error: null,
+  dataMode: "real-data",
+  isLoadingAprs: false,
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
   ...initialState,
 
   setLoading: (loading: boolean) => set({ isLoading: loading }),
+
+  setLoadingAprs: (loading: boolean) => set({ isLoadingAprs: loading }),
 
   setError: (error: string | null) => set({ error, isLoading: false }),
 
@@ -62,7 +75,15 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
       error: null,
     }),
 
+  setDataMode: (mode: DataMode) => set({ dataMode: mode }),
+
   reset: () => set(initialState),
+
+  resetData: () =>
+    set((state) => ({
+      ...initialState,
+      dataMode: state.dataMode, // Preserve the current dataMode
+    })),
 
   updatePosition: (positionId: string, updates: Partial<Position>) =>
     set((state) => ({
@@ -80,4 +101,8 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
     set((state) => ({
       positions: state.positions.filter((pos) => pos.id !== positionId),
     })),
+
+  setPositions: (positions: Position[]) => set({ positions }),
+
+  setCurrentBalance: (balance: number) => set({ currentBalance: balance }),
 }));

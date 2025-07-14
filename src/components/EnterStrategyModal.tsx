@@ -19,6 +19,7 @@ import {
 import { ArrowRight } from "lucide-react";
 import { usePortfolioStore } from "@/store";
 import { useAgoric } from "@agoric/react-components";
+import { formatApy } from "@/lib/utils";
 
 interface Strategy {
   id: string;
@@ -141,7 +142,8 @@ const EnterStrategyModal: React.FC<EnterStrategyModalProps> = ({
                         {pos.protocol} {pos.name}
                       </span>
                       <span className="text-sm text-slate-400">
-                        APY: {pos.apy}% • Balance: ${pos.value.toLocaleString()}
+                        APY: {formatApy(pos.apy)} • Balance: $
+                        {pos.value.toLocaleString()}
                       </span>
                     </SelectItem>
                   ))}

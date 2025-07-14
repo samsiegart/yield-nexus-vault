@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { useAgoric } from "@agoric/react-components";
+import { setupPortfolioWatcher } from "./portfolioWatcher";
 import { usePortfolioStore } from "./store";
 import { fetchPortfolioData } from "./queries/portfolioQueries";
 import { FeedbackButton } from "./components/FeedbackButton";
@@ -19,15 +20,37 @@ const queryClient = new QueryClient();
 
 const InnerApp = () => {
   const { themeClass } = useTheme();
-  const { walletConnection } = useAgoric();
-  const { setLoading, setError, setPortfolioData, reset, isLoaded } =
-    usePortfolioStore();
+
+  interface AgoricExtended {
+    walletConnection?: unknown;
+    chainStorageWatcher?: unknown;
+    offerIdsToPublicSubscribers?:
+      | Map<string, Record<string, string>>
+      | Record<string, Record<string, string>>;
+  }
+
+  const { walletConnection, chainStorageWatcher, offerIdsToPublicSubscribers } =
+    useAgoric() as AgoricExtended;
+  const {
+    setLoading,
+    setError,
+    setPortfolioData,
+    reset,
+    resetData,
+    isLoaded,
+    dataMode,
+  } = usePortfolioStore();
+
+  // Force reload when dataMode changes
+  useEffect(() => {
+    // Reset only data but preserve dataMode when dataMode changes to force reload
+    resetData();
+  }, [dataMode, resetData]);
 
   useEffect(() => {
     const loadPortfolioData = async () => {
-      if (!walletConnection) {
-        // Reset store when wallet disconnects
-        reset();
+      // In real-data mode, we'll rely on the portfolioWatcher for data instead of mock fetches.
+      if (dataMode === "real-data") {
         return;
       }
 
@@ -38,7 +61,7 @@ const InnerApp = () => {
 
       try {
         setLoading(true);
-        const data = await fetchPortfolioData();
+        const data = await fetchPortfolioData(dataMode);
         setPortfolioData(data);
       } catch (error) {
         setError(
@@ -55,9 +78,34 @@ const InnerApp = () => {
     setLoading,
     setError,
     setPortfolioData,
-    reset,
+    resetData,
     isLoaded,
+    dataMode,
   ]);
+
+  // --------------------------------------------------
+  // On wallet connection (real-data mode) set up portfolio watchers
+  // --------------------------------------------------
+  useEffect(() => {
+    if (
+      dataMode !== "real-data" ||
+      !offerIdsToPublicSubscribers ||
+      !chainStorageWatcher
+    ) {
+      return;
+    }
+    console.debug("[App] Setting up portfolio watcher");
+
+    const stop = setupPortfolioWatcher(
+      offerIdsToPublicSubscribers,
+      chainStorageWatcher
+    );
+    return () => {
+      if (typeof stop === "function") {
+        stop();
+      }
+    };
+  }, [dataMode, offerIdsToPublicSubscribers, chainStorageWatcher]);
 
   return (
     <div className={themeClass}>

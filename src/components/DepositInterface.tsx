@@ -43,11 +43,13 @@ import { useAgoric, AmountInput } from "@agoric/react-components";
 import WalletConnection from "@/components/WalletConnection";
 import { usePortfolioStore } from "@/store";
 import { stringifyValue } from "@agoric/web-components";
-import {
-  makeAgoricChainStorageWatcher,
-  AgoricChainStoragePathKind as Kind,
-} from "@agoric/rpc";
+import { AgoricChainStoragePathKind as Kind } from "@agoric/rpc";
 import { useToast } from "@/hooks/use-toast";
+import { useRealStrategies } from "@/hooks/useRealStrategies";
+import { formatApy } from "@/lib/utils";
+import { useStrategyMetrics } from "@/hooks/useStrategyMetrics";
+import { makePortfolioSteps } from "@/lib/ymax-client";
+import { useUsdToUsdnRate } from "@/hooks/useUsdToUsdnRate";
 
 interface Strategy {
   id: string;
@@ -105,7 +107,8 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
     purses,
     chainStorageWatcher: watcher,
   } = useAgoric();
-  const { positions } = usePortfolioStore();
+
+  const { positions, dataMode } = usePortfolioStore();
   const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState("agoric");
   const [withdrawAmounts, setWithdrawAmounts] = useState<{
@@ -121,40 +124,15 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const [totalDepositAmount, setTotalDepositAmount] = useState<bigint>(0n);
   const [balanceEvenly, setBalanceEvenly] = useState(true);
 
-  // ------------------------------------------------------------------
-  // OfferUp (ymax0) chain data
-  // ------------------------------------------------------------------
-  const [ymaxInstance, setYmaxInstance] = useState<unknown>();
-  const [brands, setBrands] = useState<Record<string, unknown>>();
+  // Real data strategies via react-query
+  const { data: realStrategies = [], isLoading: isApyLoading } =
+    useRealStrategies();
 
-  // Initialise a chain storage watcher once on mount
-  useEffect(() => {
-    // Watch for ymax0/offerUp instance
-    const stopInstances = watcher.watchLatest<Array<[string, unknown]>>(
-      [Kind.Data, "published.agoricNames.instance"],
-      (entries) => {
-        const found = entries.find(([name]) => name === "ymax0");
-        if (found) {
-          console.debug("ymax0 instance found", found);
-          setYmaxInstance(found[1]);
-        }
-      }
-    );
+  const isLoadingAprs = isApyLoading;
 
-    // Watch for brands
-    const stopBrands = watcher.watchLatest<Array<[string, unknown]>>(
-      [Kind.Data, "published.agoricNames.brand"],
-      (entries) => {
-        console.debug("brands found", entries);
-        setBrands(Object.fromEntries(entries));
-      }
-    );
-
-    return () => {
-      stopInstances();
-      stopBrands();
-    };
-  }, [watcher]);
+  // Use appropriate strategies based on dataMode
+  const availableStrategies =
+    dataMode === "real-data" ? (realStrategies as Strategy[]) : allStrategies;
 
   // Get USDC balance from purses
   const getUSDCBalance = () => {
@@ -275,9 +253,78 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const estimatedGas = 0.0045;
   const estimatedTime = "2-5 min";
 
-  const availableStrategies = allStrategies.filter(
+  const availableStrategiesForSelection = availableStrategies.filter(
     (strategy) => !selectedStrategies.find((s) => s.id === strategy.id)
   );
+
+  // Component for each strategy selection row
+  const StrategySelectItem: React.FC<{ strat: Strategy }> = ({ strat }) => {
+    const { data, isLoading } = useStrategyMetrics(strat.id);
+
+    const displayApy =
+      isLoading || data?.apy === undefined ? "—" : formatApy(data.apy);
+
+    return (
+      <Button
+        key={strat.id}
+        variant="outline"
+        className="w-full justify-start bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+        onClick={() => addStrategy(strat)}
+      >
+        <div className="text-left">
+          <div className="font-medium">{strat.protocol}</div>
+          <div className="text-sm text-slate-400">
+            {strat.name} • {strat.chain} • {displayApy} APY
+          </div>
+        </div>
+      </Button>
+    );
+  };
+
+  const StrategyRow: React.FC<{ strat: Strategy }> = ({ strat }) => {
+    const { data, isLoading } = useStrategyMetrics(strat.id);
+    const apyDisplay =
+      isLoading || data?.apy === undefined ? "—" : formatApy(data.apy);
+
+    return (
+      <div
+        key={strat.id}
+        className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg"
+      >
+        <div className="flex-1">
+          <div className="font-medium text-white">
+            {strat.protocol} {strat.name}
+          </div>
+          <div className="text-sm text-slate-400">
+            {strat.chain} • {apyDisplay} APY
+          </div>
+        </div>
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Input
+              type="number"
+              value={strat.amount || 0}
+              onChange={(e) =>
+                updateStrategyAmount(strat.id, Number(e.target.value))
+              }
+              className="w-20 bg-slate-700/50 border-slate-600 text-white text-center"
+              placeholder="0"
+              max={100}
+            />
+            <span className="text-sm text-slate-400">%</span>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => removeStrategy(strat.id)}
+            className="bg-transparent text-red-400 border-red-400 hover:bg-red-400/10 hover:text-red-300"
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   // Check if rebalance allocation is valid
   const isRebalanceValid = () => {
@@ -305,25 +352,14 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   //-------------------------------------------------------------------
   // Deposit – makeOffer to OfferUp
   //-------------------------------------------------------------------
-  const handleConfirmDeposit = () => {
+  const { data: swapPrice } = useUsdToUsdnRate();
+
+  const handleConfirmDeposit = async () => {
     if (!walletConnection) {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet first.",
-      });
-      return;
-    }
-    if (!ymaxInstance) {
-      toast({
-        title: "Contract not found",
-        description: "ymax instance not available on chain.",
-      });
-      return;
-    }
-    if (!brands?.USDC) {
-      toast({
-        title: "Missing brand",
-        description: "Required brand (USDC) is not available.",
+        variant: "destructive",
       });
       return;
     }
@@ -331,61 +367,92 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       toast({
         title: "Invalid amount",
         description: "Please enter a non-zero amount.",
+        variant: "destructive",
       });
       return;
     }
-
-    // Get brand from purses
-    // XXX: Workaround for mismatching brand board ID in agoricNames.brand
-    // XXX: Remove this once the issue is fixed
-    const getPoc26Brand = () => {
-      if (!purses) return null;
-
-      // Look for PoC26 purse in the purses
-      const poc26Purse = purses.find(
-        (purse) => purse.brandPetname?.toLowerCase() === "poc26"
-      );
-
-      return poc26Purse?.brand;
+    const getPoc26Brand = async () => {
+      const res = await watcher.queryOnce<Array<[string, { brand: Brand }]>>([
+        Kind.Data,
+        "published.agoricNames.vbankAsset",
+      ]);
+      const found = res.find(([name]) => name === "upoc26");
+      return found?.[1]?.brand;
     };
-    const poc26Brand = getPoc26Brand();
+    const poc26Brand = await getPoc26Brand();
+    const USDCBrand = usdcPurse?.brand;
     if (!poc26Brand) {
       toast({
         title: "Missing brand",
         description: "Required brand (PoC26) is not available in purses.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!USDCBrand) {
+      toast({
+        title: "Missing brand",
+        description: "Required brand (USDC) is not available in purses.",
+        variant: "destructive",
       });
       return;
     }
 
     const offerId = Date.now();
     const giveValue = totalDepositAmount;
-    const give = {
-      USDN: { brand: brands.USDC, value: giveValue },
-      Access: { brand: poc26Brand, value: 1n },
-    };
 
-    try {
-      walletConnection.makeOffer(
-        {
-          source: "contract",
-          instance: ymaxInstance as unknown,
-          publicInvitationMaker: "makeOpenPortfolioInvitation",
+    const { give, steps } = makePortfolioSteps(
+      { USDN: { brand: USDCBrand as Brand<"nat">, value: giveValue } },
+      // TODO should query
+      {
+        detail: {
+          usdnOut: (() => {
+            if (swapPrice && Number.isFinite(swapPrice)) {
+              const rate = 1 / swapPrice; // USDN per USDC
+              const usdcFloat = Number(giveValue) / 1_000_000;
+              const usdnFloat = usdcFloat * rate * 0.995; // 0.5% slippage buffer
+              return BigInt(Math.floor(usdnFloat * 1_000_000));
+            }
+            return (giveValue * 99n) / 100n; // fallback 1% buffer
+          })(),
         },
-        { give },
-        { usdnOut: (giveValue * 99n) / 100n },
-        (update: { status: string; data?: unknown }) => {
-          console.log("Deposit offer update", update);
-          toast({
-            title: `Offer ${update.status}`,
-            description: JSON.stringify(update.data ?? {}, null, 2),
-          });
+      }
+    );
+
+    walletConnection.makeOffer(
+      {
+        source: "agoricContract",
+        instancePath: ["ymax0"],
+        callPipe: [["makeOpenPortfolioInvitation", []]],
+      },
+      {
+        give: {
+          ...give,
+          Access: { brand: poc26Brand, value: 1n },
         },
-        offerId
-      );
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast({ title: "Offer error", description: message });
-    }
+      },
+      { flow: steps },
+      (update) => {
+        console.log("Deposit offer update", update.data);
+        toast({
+          title: `Offer ${update.status}`,
+          // Show description only if message exists (e.g., Error objects)
+          description:
+            update.data &&
+            typeof update.data === "object" &&
+            "message" in update.data
+              ? (update.data as { message: string }).message
+              : undefined,
+          variant:
+            update.status === "error" || update.status === "rejected"
+              ? "destructive"
+              : update.status === "accepted"
+              ? "success"
+              : "default",
+        });
+      },
+      offerId
+    );
   };
 
   const WalletConnectPrompt = () => (
@@ -461,23 +528,11 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                       </DialogHeader>
 
                       <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {availableStrategies.map((strategy) => (
-                          <Button
+                        {availableStrategiesForSelection.map((strategy) => (
+                          <StrategySelectItem
                             key={strategy.id}
-                            variant="outline"
-                            className="w-full justify-start bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-                            onClick={() => addStrategy(strategy)}
-                          >
-                            <div className="text-left">
-                              <div className="font-medium">
-                                {strategy.protocol}
-                              </div>
-                              <div className="text-sm text-slate-400">
-                                {strategy.name} • {strategy.chain} •{" "}
-                                {strategy.apy}% APY
-                              </div>
-                            </div>
-                          </Button>
+                            strat={strategy}
+                          />
                         ))}
                       </div>
                     </DialogContent>
@@ -507,45 +562,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                     )}
 
                     {selectedStrategies.map((strategy) => (
-                      <div
-                        key={strategy.id}
-                        className="flex items-center justify-between p-4 bg-slate-700/30 rounded-lg"
-                      >
-                        <div className="flex-1">
-                          <div className="font-medium text-white">
-                            {strategy.protocol} {strategy.name}
-                          </div>
-                          <div className="text-sm text-slate-400">
-                            {strategy.chain} • {strategy.apy}% APY
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center space-x-2">
-                            <Input
-                              type="number"
-                              value={strategy.amount || 0}
-                              onChange={(e) =>
-                                updateStrategyAmount(
-                                  strategy.id,
-                                  Number(e.target.value)
-                                )
-                              }
-                              className="w-20 bg-slate-700/50 border-slate-600 text-white text-center"
-                              placeholder="0"
-                              max={100}
-                            />
-                            <span className="text-sm text-slate-400">%</span>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeStrategy(strategy.id)}
-                            className="bg-transparent text-red-400 border-red-400 hover:bg-red-400/10 hover:text-red-300"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
+                      <StrategyRow key={strategy.id} strat={strategy} />
                     ))}
                   </>
                 )}
@@ -615,7 +632,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           onChange={(value: bigint) =>
                             setTotalDepositAmount(value)
                           }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                          className="flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
                         />
                         {isAmountInvalid && (
                           <div className="flex items-center space-x-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
@@ -804,7 +821,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                             {position.protocol} {position.name}
                           </div>
                           <div className="text-sm text-slate-400">
-                            {position.chain} • {position.apy}% APY • $
+                            {position.chain} • {formatApy(position.apy)} APY • $
                             {position.value.toLocaleString()}
                           </div>
                         </div>
@@ -926,7 +943,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           {position.protocol} {position.name}
                         </div>
                         <div className="text-sm text-slate-400">
-                          {position.chain} • {position.apy}% APY • $
+                          {position.chain} • {formatApy(position.apy)} APY • $
                           {position.value.toLocaleString()}
                         </div>
                       </div>
