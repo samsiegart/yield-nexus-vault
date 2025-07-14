@@ -8,6 +8,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import WalletConnection from "@/components/WalletConnection";
 import StrategyDashboard from "@/components/StrategyDashboard";
 import DepositInterface from "@/components/DepositInterface";
@@ -16,7 +24,7 @@ import OpportunitiesView from "@/components/OpportunitiesView";
 import ActivityView from "@/components/ActivityView";
 import CreatePortfolioView from "@/components/CreatePortfolioView";
 import { useAgoric } from "@agoric/react-components";
-import { usePortfolioStore } from "@/store";
+import { usePortfolioStore, DataMode } from "@/store";
 import {
   Wallet,
   TrendingUp,
@@ -25,6 +33,7 @@ import {
   MessageCircle,
   X,
   Code,
+  ChevronDown,
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
@@ -32,15 +41,16 @@ const Index = () => {
   const [selectedStrategies, setSelectedStrategies] = useState([]);
   const [currentView, setCurrentView] = useState("dashboard");
   const [showChatbot, setShowChatbot] = useState(false);
-  const [debugHasPositions, setDebugHasPositions] = useState(true);
   const chatIframeRef = useRef(null);
   const location = useLocation();
   const { address } = useAgoric();
-  const { positions } = usePortfolioStore();
+  const { positions, dataMode, setDataMode } = usePortfolioStore();
 
   // Determine if we should show onboarding view
   const shouldShowOnboarding =
-    !address || !debugHasPositions || positions.length === 0;
+    !address ||
+    dataMode === "no-positions" ||
+    (dataMode === "real-data" && positions.length === 0);
 
   let queryParams = `?title=${encodeURIComponent("Max Chat")}`;
   queryParams += `&theme=${encodeURIComponent("dark-blue")}`;
@@ -81,15 +91,49 @@ const Index = () => {
               <h1 className="text-2xl font-bold text-white">YMax</h1>
             </div>
             <div className="flex items-center space-x-3">
-              <Button
-                onClick={() => setDebugHasPositions(!debugHasPositions)}
-                className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
-                variant="outline"
-                size="sm"
-              >
-                <Code className="w-4 h-4 mr-2" />
-                {debugHasPositions ? "Has Positions" : "No Positions"}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"
+                    variant="outline"
+                    size="sm"
+                  >
+                    <Code className="w-4 h-4 mr-2" />
+                    {dataMode === "no-positions" && "Mock Create Portfolio"}
+                    {dataMode === "has-positions" && "Mock Portfolio"}
+                    {dataMode === "real-data" && "Devnet"}
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="bg-slate-800 border-slate-600 text-white"
+                  align="end"
+                >
+                  <DropdownMenuRadioGroup
+                    value={dataMode}
+                    onValueChange={(value) => setDataMode(value as DataMode)}
+                  >
+                    <DropdownMenuRadioItem
+                      value="no-positions"
+                      className="text-white focus:bg-slate-700 focus:text-white"
+                    >
+                      Mock Create Portfolio
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="has-positions"
+                      className="text-white focus:bg-slate-700 focus:text-white"
+                    >
+                      Mock Portfolio
+                    </DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem
+                      value="real-data"
+                      className="text-white focus:bg-slate-700 focus:text-white"
+                    >
+                      Devnet
+                    </DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <Button
                 onClick={() => setShowChatbot(!showChatbot)}
                 className="bg-slate-800/50 border-slate-600 text-white hover:bg-slate-700/50 hover:text-white"

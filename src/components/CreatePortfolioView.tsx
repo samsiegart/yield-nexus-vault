@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,9 @@ import { Target, Trash2, Plus, ArrowRight, Info } from "lucide-react";
 import { useAgoric } from "@agoric/react-components";
 import WalletConnection from "@/components/WalletConnection";
 import { YIELD_STRATEGIES } from "@/components/StrategyDashboard";
+import { usePortfolioStore } from "@/store";
+import { fetchRealStrategies } from "@/queries/portfolioQueries";
+import { formatApy } from "@/lib/utils";
 
 interface SelectedOpportunity {
   id: string;
@@ -40,17 +43,19 @@ const protocolIcons: Record<string, string> = {
   Yearn: "/icons/yearn.jpg",
   Curve: "/icons/curve.png",
   Convex: "/icons/convex.png",
+  Noble: "/icons/USDN.svg",
   Boost: "",
 };
 
 const chainIcons: Record<string, string> = {
   Ethereum: "/icons/ethereum.png",
   Polygon: "/icons/polygon.png",
-  Noble: "",
+  Noble: "/icons/noble.png",
 };
 
 const CreatePortfolioView: React.FC = () => {
   const { walletConnection, purses } = useAgoric();
+  const { dataMode, isLoadingAprs, setLoadingAprs } = usePortfolioStore();
   const [selectedOpportunities, setSelectedOpportunities] = useState<
     SelectedOpportunity[]
   >([]);
@@ -58,8 +63,27 @@ const CreatePortfolioView: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedChain, setSelectedChain] = useState("agoric");
 
-  // Get top 3 strategies by APY
-  const topStrategies = [...YIELD_STRATEGIES]
+  // Real data strategies
+  const [realStrategies, setRealStrategies] = useState<
+    (typeof YIELD_STRATEGIES)[number][]
+  >([]);
+
+  // Fetch real strategies when in real data mode
+  useEffect(() => {
+    if (dataMode === "real-data") {
+      setLoadingAprs(true);
+      fetchRealStrategies()
+        .then(setRealStrategies)
+        .finally(() => setLoadingAprs(false));
+    }
+  }, [dataMode, setLoadingAprs]);
+
+  // Use appropriate strategies based on dataMode
+  const availableStrategies =
+    dataMode === "real-data" ? realStrategies : YIELD_STRATEGIES;
+
+  // Get top 3 strategies by APY from available strategies
+  const topStrategies = [...availableStrategies]
     .sort((a, b) => b.apy - a.apy)
     .slice(0, 3);
 
@@ -69,7 +93,7 @@ const CreatePortfolioView: React.FC = () => {
     0
   );
 
-  const handleAddOpportunity = (strategy: (typeof YIELD_STRATEGIES)[0]) => {
+  const handleAddOpportunity = (strategy: (typeof availableStrategies)[0]) => {
     const newOpportunity: SelectedOpportunity = {
       id: strategy.id,
       protocol: strategy.protocol,
@@ -195,7 +219,14 @@ const CreatePortfolioView: React.FC = () => {
                               variant="secondary"
                               className="bg-slate-700 text-slate-300"
                             >
-                              {opportunity.apy}%
+                              {dataMode === "real-data" && isLoadingAprs ? (
+                                <div className="flex items-center space-x-1">
+                                  <div className="animate-spin h-2 w-2 border border-slate-300 border-t-transparent rounded-full"></div>
+                                  <span className="text-xs">Loading...</span>
+                                </div>
+                              ) : (
+                                formatApy(opportunity.apy)
+                              )}
                             </Badge>
                           </div>
                           <div className="text-sm text-slate-400">
@@ -371,7 +402,14 @@ const CreatePortfolioView: React.FC = () => {
                     </span>
                   </div>
                   <div className="text-2xl font-bold text-green-400">
-                    {strategy.apy}%
+                    {dataMode === "real-data" && isLoadingAprs ? (
+                      <div className="flex items-center space-x-1">
+                        <div className="animate-spin h-4 w-4 border-2 border-green-400 border-t-transparent rounded-full"></div>
+                        <span className="text-sm">Loading...</span>
+                      </div>
+                    ) : (
+                      formatApy(strategy.apy)
+                    )}
                   </div>
                 </div>
                 <div className="flex-1" />
@@ -425,8 +463,9 @@ const CreatePortfolioView: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {YIELD_STRATEGIES.sort((a, b) => b.apy - a.apy).map(
-                  (strategy) => (
+                {availableStrategies
+                  .sort((a, b) => b.apy - a.apy)
+                  .map((strategy) => (
                     <tr
                       key={strategy.id}
                       className={`border-b border-slate-700 hover:bg-slate-700/50 ${
@@ -468,7 +507,14 @@ const CreatePortfolioView: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3 px-2 font-semibold text-green-400">
-                        {strategy.apy}%
+                        {dataMode === "real-data" && isLoadingAprs ? (
+                          <div className="flex items-center space-x-1">
+                            <div className="animate-spin h-3 w-3 border-2 border-green-400 border-t-transparent rounded-full"></div>
+                            <span className="text-xs">Loading...</span>
+                          </div>
+                        ) : (
+                          formatApy(strategy.apy)
+                        )}
                       </td>
                       <td className="py-3 px-2">{strategy.tvl}</td>
                       <td className="py-3 px-2">${strategy.minDeposit}</td>
@@ -499,8 +545,7 @@ const CreatePortfolioView: React.FC = () => {
                         </Button>
                       </td>
                     </tr>
-                  )
-                )}
+                  ))}
               </tbody>
             </table>
           </CardContent>

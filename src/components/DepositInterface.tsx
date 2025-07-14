@@ -43,11 +43,11 @@ import { useAgoric, AmountInput } from "@agoric/react-components";
 import WalletConnection from "@/components/WalletConnection";
 import { usePortfolioStore } from "@/store";
 import { stringifyValue } from "@agoric/web-components";
-import {
-  makeAgoricChainStorageWatcher,
-  AgoricChainStoragePathKind as Kind,
-} from "@agoric/rpc";
+import { AgoricChainStoragePathKind as Kind } from "@agoric/rpc";
 import { useToast } from "@/hooks/use-toast";
+import { fetchRealStrategies } from "@/queries/portfolioQueries";
+import { formatApy } from "@/lib/utils";
+import { makePortfolioSteps } from "@/lib/ymax-client";
 
 interface Strategy {
   id: string;
@@ -100,12 +100,10 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   selectedStrategies,
   onUpdateStrategies,
 }) => {
-  const {
-    walletConnection,
-    purses,
-    chainStorageWatcher: watcher,
-  } = useAgoric();
-  const { positions } = usePortfolioStore();
+  const { walletConnection, purses } = useAgoric();
+
+  const { positions, dataMode, isLoadingAprs, setLoadingAprs } =
+    usePortfolioStore();
   const { toast } = useToast();
   const [selectedChain, setSelectedChain] = useState("agoric");
   const [withdrawAmounts, setWithdrawAmounts] = useState<{
@@ -121,40 +119,22 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const [totalDepositAmount, setTotalDepositAmount] = useState<bigint>(0n);
   const [balanceEvenly, setBalanceEvenly] = useState(true);
 
-  // ------------------------------------------------------------------
-  // OfferUp (ymax0) chain data
-  // ------------------------------------------------------------------
-  const [ymaxInstance, setYmaxInstance] = useState<unknown>();
-  const [brands, setBrands] = useState<Record<string, unknown>>();
+  // Real data strategies
+  const [realStrategies, setRealStrategies] = useState<Strategy[]>([]);
 
-  // Initialise a chain storage watcher once on mount
+  // Fetch real strategies when in real data mode
   useEffect(() => {
-    // Watch for ymax0/offerUp instance
-    const stopInstances = watcher.watchLatest<Array<[string, unknown]>>(
-      [Kind.Data, "published.agoricNames.instance"],
-      (entries) => {
-        const found = entries.find(([name]) => name === "ymax0");
-        if (found) {
-          console.debug("ymax0 instance found", found);
-          setYmaxInstance(found[1]);
-        }
-      }
-    );
+    if (dataMode === "real-data") {
+      setLoadingAprs(true);
+      fetchRealStrategies()
+        .then(setRealStrategies)
+        .finally(() => setLoadingAprs(false));
+    }
+  }, [dataMode, setLoadingAprs]);
 
-    // Watch for brands
-    const stopBrands = watcher.watchLatest<Array<[string, unknown]>>(
-      [Kind.Data, "published.agoricNames.brand"],
-      (entries) => {
-        console.debug("brands found", entries);
-        setBrands(Object.fromEntries(entries));
-      }
-    );
-
-    return () => {
-      stopInstances();
-      stopBrands();
-    };
-  }, [watcher]);
+  // Use appropriate strategies based on dataMode
+  const availableStrategies =
+    dataMode === "real-data" ? realStrategies : allStrategies;
 
   // Get USDC balance from purses
   const getUSDCBalance = () => {
@@ -275,7 +255,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   const estimatedGas = 0.0045;
   const estimatedTime = "2-5 min";
 
-  const availableStrategies = allStrategies.filter(
+  const availableStrategiesForSelection = availableStrategies.filter(
     (strategy) => !selectedStrategies.find((s) => s.id === strategy.id)
   );
 
@@ -305,25 +285,11 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
   //-------------------------------------------------------------------
   // Deposit – makeOffer to OfferUp
   //-------------------------------------------------------------------
-  const handleConfirmDeposit = () => {
+  const handleConfirmDeposit = async () => {
     if (!walletConnection) {
       toast({
         title: "Wallet not connected",
         description: "Please connect your wallet first.",
-      });
-      return;
-    }
-    if (!ymaxInstance) {
-      toast({
-        title: "Contract not found",
-        description: "ymax instance not available on chain.",
-      });
-      return;
-    }
-    if (!brands?.USDC) {
-      toast({
-        title: "Missing brand",
-        description: "Required brand (USDC) is not available.",
       });
       return;
     }
@@ -334,10 +300,6 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       });
       return;
     }
-
-    // Get brand from purses
-    // XXX: Workaround for mismatching brand board ID in agoricNames.brand
-    // XXX: Remove this once the issue is fixed
     const getPoc26Brand = () => {
       if (!purses) return null;
 
@@ -349,6 +311,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       return poc26Purse?.brand;
     };
     const poc26Brand = getPoc26Brand();
+    const USDCBrand = usdcPurse?.brand;
     if (!poc26Brand) {
       toast({
         title: "Missing brand",
@@ -356,36 +319,51 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
       });
       return;
     }
+    if (!USDCBrand) {
+      toast({
+        title: "Missing brand",
+        description: "Required brand (USDC) is not available in purses.",
+      });
+      return;
+    }
 
     const offerId = Date.now();
     const giveValue = totalDepositAmount;
-    const give = {
-      USDN: { brand: brands.USDC, value: giveValue },
-      Access: { brand: poc26Brand, value: 1n },
-    };
 
-    try {
-      walletConnection.makeOffer(
-        {
-          source: "contract",
-          instance: ymaxInstance as unknown,
-          publicInvitationMaker: "makeOpenPortfolioInvitation",
+    const { give, steps } = makePortfolioSteps(
+      { USDN: { brand: USDCBrand as Brand<"nat">, value: giveValue } },
+      // TODO should query
+      { detail: { usdnOut: (giveValue * 99n) / 100n } }
+    );
+
+    walletConnection.makeOffer(
+      {
+        source: "agoricContract",
+        instancePath: ["ymax0"],
+        callPipe: [["makeOpenPortfolioInvitation", []]],
+      },
+      {
+        give: {
+          ...give,
+          Access: { brand: poc26Brand, value: 1n },
         },
-        { give },
-        { usdnOut: (giveValue * 99n) / 100n },
-        (update: { status: string; data?: unknown }) => {
-          console.log("Deposit offer update", update);
-          toast({
-            title: `Offer ${update.status}`,
-            description: JSON.stringify(update.data ?? {}, null, 2),
-          });
-        },
-        offerId
-      );
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      toast({ title: "Offer error", description: message });
-    }
+      },
+      { flow: steps },
+      (update) => {
+        console.log("Deposit offer update", update.data);
+        toast({
+          title: `Offer ${update.status}`,
+          // Show description only if message exists (e.g., Error objects)
+          description:
+            update.data &&
+            typeof update.data === "object" &&
+            "message" in update.data
+              ? (update.data as { message: string }).message
+              : undefined,
+        });
+      },
+      offerId
+    );
   };
 
   const WalletConnectPrompt = () => (
@@ -461,7 +439,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                       </DialogHeader>
 
                       <div className="space-y-2 max-h-64 overflow-y-auto">
-                        {availableStrategies.map((strategy) => (
+                        {availableStrategiesForSelection.map((strategy) => (
                           <Button
                             key={strategy.id}
                             variant="outline"
@@ -474,7 +452,14 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                               </div>
                               <div className="text-sm text-slate-400">
                                 {strategy.name} • {strategy.chain} •{" "}
-                                {strategy.apy}% APY
+                                {dataMode === "real-data" && isLoadingAprs ? (
+                                  <span className="inline-flex items-center space-x-1">
+                                    <div className="animate-spin h-2 w-2 border border-slate-400 border-t-transparent rounded-full"></div>
+                                    <span>Loading APY...</span>
+                                  </span>
+                                ) : (
+                                  `${formatApy(strategy.apy)} APY`
+                                )}
                               </div>
                             </div>
                           </Button>
@@ -516,7 +501,15 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                             {strategy.protocol} {strategy.name}
                           </div>
                           <div className="text-sm text-slate-400">
-                            {strategy.chain} • {strategy.apy}% APY
+                            {strategy.chain} •{" "}
+                            {dataMode === "real-data" && isLoadingAprs ? (
+                              <span className="inline-flex items-center space-x-1">
+                                <div className="animate-spin h-2 w-2 border border-slate-400 border-t-transparent rounded-full"></div>
+                                <span>Loading APY...</span>
+                              </span>
+                            ) : (
+                              `${formatApy(strategy.apy)} APY`
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
@@ -615,7 +608,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           onChange={(value: bigint) =>
                             setTotalDepositAmount(value)
                           }
-                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
+                          className="flex h-10 w-full rounded-md border border-input px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500"
                         />
                         {isAmountInvalid && (
                           <div className="flex items-center space-x-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
@@ -804,7 +797,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                             {position.protocol} {position.name}
                           </div>
                           <div className="text-sm text-slate-400">
-                            {position.chain} • {position.apy}% APY • $
+                            {position.chain} • {formatApy(position.apy)} APY • $
                             {position.value.toLocaleString()}
                           </div>
                         </div>
@@ -926,7 +919,7 @@ const DepositInterface: React.FC<DepositInterfaceProps> = ({
                           {position.protocol} {position.name}
                         </div>
                         <div className="text-sm text-slate-400">
-                          {position.chain} • {position.apy}% APY • $
+                          {position.chain} • {formatApy(position.apy)} APY • $
                           {position.value.toLocaleString()}
                         </div>
                       </div>

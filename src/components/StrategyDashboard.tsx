@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -30,6 +30,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import EnterStrategyModal from "@/components/EnterStrategyModal";
+import { fetchRealStrategies } from "@/queries/portfolioQueries";
+import { formatApy } from "@/lib/utils";
 
 interface Strategy {
   id: string;
@@ -129,13 +131,14 @@ const protocolIcons: Record<string, string> = {
   Yearn: "/icons/yearn.jpg",
   Curve: "/icons/curve.png",
   Convex: "/icons/convex.png",
+  Noble: "/icons/USDN.svg",
   Boost: "", // placeholder
 };
 
 const chainIcons: Record<string, string> = {
   Ethereum: "/icons/ethereum.png",
   Polygon: "/icons/polygon.png",
-  Noble: "",
+  Noble: "/icons/noble.png",
 };
 
 const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
@@ -145,7 +148,14 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onNavigateToOpportunities,
 }) => {
   const { walletConnection, purses } = useAgoric();
-  const { currentBalance, totalDeposits, positions } = usePortfolioStore();
+  const {
+    currentBalance,
+    totalDeposits,
+    positions,
+    dataMode,
+    isLoadingAprs,
+    setLoadingAprs,
+  } = usePortfolioStore();
   const gainsValue = currentBalance - totalDeposits;
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -157,6 +167,23 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   const [enterOpen, setEnterOpen] = useState(false);
   const [selectedEnterStrategy, setSelectedEnterStrategy] =
     useState<Strategy | null>(null);
+
+  // Real data strategies
+  const [realStrategies, setRealStrategies] = useState<Strategy[]>([]);
+
+  // Fetch real strategies when in real data mode
+  useEffect(() => {
+    if (dataMode === "real-data") {
+      setLoadingAprs(true);
+      fetchRealStrategies()
+        .then(setRealStrategies)
+        .finally(() => setLoadingAprs(false));
+    }
+  }, [dataMode, setLoadingAprs]);
+
+  // Use appropriate strategies based on dataMode
+  const availableStrategies =
+    dataMode === "real-data" ? realStrategies : strategies;
 
   const handleQuickWithdraw = () => {
     console.log(`Withdrawing $${withdrawAmount} USDC`);
@@ -172,7 +199,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   };
 
   // Derive the top 3 strategies with the highest APY
-  const topStrategies = [...strategies]
+  const topStrategies = [...availableStrategies]
     .sort((a, b) => b.apy - a.apy)
     .slice(0, 3);
 
@@ -218,8 +245,9 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
           subtitle:
             "Aave currently offers higher APY than your Compound position",
           gain: 1234,
-          sourceId: "compound-eth",
-          targetId: "aave-eth",
+          sourceId:
+            dataMode === "real-data" ? "compound-eth-real" : "compound-eth",
+          targetId: dataMode === "real-data" ? "aave-eth-real" : "aave-eth",
           percent: 15,
         },
       ].filter((s) => positions.find((p) => p.id === s.sourceId))
@@ -471,50 +499,65 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {topStrategies.map((strategy) => (
-            <Card
-              key={strategy.id}
-              className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
-            >
-              <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {protocolIcons[strategy.protocol] && (
-                      <img
-                        src={protocolIcons[strategy.protocol]}
-                        alt="protocol"
-                        className="w-5 h-5"
-                      />
-                    )}
-                    {chainIcons[strategy.chain] && (
-                      <img
-                        src={chainIcons[strategy.chain]}
-                        alt="chain"
-                        className="w-5 h-5"
-                      />
-                    )}
-                    <span className="font-semibold text-white">
-                      {strategy.protocol} {strategy.name}
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-green-400">
-                    {strategy.apy}%
-                  </div>
-                </div>
-                <div className="flex-1" />
-                <Button
-                  size="sm"
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full px-5 py-1 self-center mt-4"
-                  onClick={() => {
-                    setSelectedEnterStrategy(strategy);
-                    setEnterOpen(true);
-                  }}
+          {dataMode === "real-data" &&
+          (isLoadingAprs || topStrategies.length === 0)
+            ? [...Array(3)].map((_, idx) => (
+                <Card
+                  key={`placeholder-${idx}`}
+                  className="bg-slate-800/40 border-slate-700 animate-pulse h-32"
+                />
+              ))
+            : topStrategies.map((strategy) => (
+                <Card
+                  key={strategy.id}
+                  className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
                 >
-                  Enter
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <CardContent className="p-4 flex flex-col h-full">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        {protocolIcons[strategy.protocol] && (
+                          <img
+                            src={protocolIcons[strategy.protocol]}
+                            alt="protocol"
+                            className="w-5 h-5"
+                          />
+                        )}
+                        {chainIcons[strategy.chain] && (
+                          <img
+                            src={chainIcons[strategy.chain]}
+                            alt="chain"
+                            className="w-5 h-5"
+                          />
+                        )}
+                        <span className="font-semibold text-white">
+                          {strategy.protocol} {strategy.name}
+                        </span>
+                      </div>
+                      <div className="text-2xl font-bold text-green-400">
+                        {dataMode === "real-data" && isLoadingAprs ? (
+                          <div className="flex items-center space-x-1">
+                            <div className="animate-spin h-4 w-4 border-2 border-green-400 border-t-transparent rounded-full"></div>
+                            <span className="text-sm">Loading...</span>
+                          </div>
+                        ) : (
+                          formatApy(strategy.apy)
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex-1" />
+                    <Button
+                      size="sm"
+                      className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full px-5 py-1 self-center mt-4"
+                      onClick={() => {
+                        setSelectedEnterStrategy(strategy);
+                        setEnterOpen(true);
+                      }}
+                    >
+                      Enter
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
         </div>
       </div>
 
@@ -529,7 +572,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
           </div>
 
           {suggestions.map((sugg) => {
-            const targetStrat = strategies.find(
+            const targetStrat = availableStrategies.find(
               (st) => st.id === sugg.targetId
             );
             const sourcePos = positions.find((p) => p.id === sugg.sourceId);
@@ -655,7 +698,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                         </div>
                       </td>
                       <td className="py-3 pr-4 font-semibold text-green-400">
-                        {position.apy}%
+                        {formatApy(position.apy)}
                       </td>
                       <td className="py-3 pr-4 font-semibold text-white">
                         {position.targetPercentage}%
