@@ -33,6 +33,7 @@ import EnterStrategyModal from "@/components/EnterStrategyModal";
 import { BASE_STRATEGIES, BaseStrategy } from "@/constants/strategies";
 import { useStrategyMetrics } from "@/hooks/useStrategyMetrics";
 import { formatApy } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Strategy {
   id: string;
@@ -76,6 +77,7 @@ export const PoolPlaces = {
 const strategies: Strategy[] = [
   {
     id: "Aave_Ethereum",
+    allocationKey: "Aave_Ethereum",
     protocol: "AAVE",
     name: "USAV",
     apy: 14.0,
@@ -87,6 +89,7 @@ const strategies: Strategy[] = [
   },
   {
     id: "beefy-polygon",
+    allocationKey: "Beefy_Polygon",
     protocol: "Beefy",
     name: "USDC",
     apy: 10.0,
@@ -98,6 +101,7 @@ const strategies: Strategy[] = [
   },
   {
     id: "compound-eth",
+    allocationKey: "Compound_Ethereum",
     protocol: "Compound",
     name: "USDC",
     apy: 4.0,
@@ -109,6 +113,7 @@ const strategies: Strategy[] = [
   },
   {
     id: "yearn-eth",
+    allocationKey: "Yearn_Ethereum",
     protocol: "Yearn",
     name: "USDC Vault",
     apy: 8.5,
@@ -120,6 +125,7 @@ const strategies: Strategy[] = [
   },
   {
     id: "curve-eth",
+    allocationKey: "Curve_Ethereum",
     protocol: "Curve",
     name: "3Pool",
     apy: 6.2,
@@ -131,6 +137,7 @@ const strategies: Strategy[] = [
   },
   {
     id: "convex-eth",
+    allocationKey: "Convex_Ethereum",
     protocol: "Convex",
     name: "USDC",
     apy: 12.5,
@@ -168,6 +175,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   onNavigateToDeposit,
   onNavigateToOpportunities,
 }) => {
+  const { toast } = useToast();
   const { walletConnection, purses } = useAgoric();
   const { currentBalance, totalDeposits, positions, dataMode } =
     usePortfolioStore();
@@ -195,8 +203,80 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
   const handleQuickDeposit = () => {
     // This would handle the deposit logic
     console.log(`Depositing $${depositAmount} USDC`);
-    setShowDepositDialog(false);
-    setDepositAmount("");
+    const parsedAmount = Number(depositAmount) * 1_000_000;
+    const depositAmountBigInt = BigInt(parsedAmount);
+    if (!walletConnection) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (depositAmountBigInt === 0n) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a non-zero amount.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const USDCBrand = usdcPurse?.brand;
+    if (!USDCBrand) {
+      toast({
+        title: "Missing brand",
+        description: "Required brand (USDC) is not available in purses.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const offerId = Date.now();
+    const usdnAmount = {
+      brand: USDCBrand as Brand<"nat">,
+      value: depositAmountBigInt,
+    };
+    walletConnection.makeOffer(
+      {
+        source: "agoricContract",
+        instancePath: ["ymax0"],
+        callPipe: [["makeOpenPortfolioInvitation", []]],
+      },
+      {
+        give: {
+          USDN: usdnAmount,
+        },
+      },
+      {
+        flow: [
+          {
+            src: "<Deposit>",
+            dest: "@agoric",
+            amount: usdnAmount,
+          },
+        ],
+      },
+      (update) => {
+        console.log("Deposit offer update", update.data);
+        toast({
+          title: `Offer ${update.status}`,
+          // Show description only if message exists (e.g., Error objects)
+          description:
+            update.data &&
+            typeof update.data === "object" &&
+            "message" in update.data
+              ? (update.data as { message: string }).message
+              : undefined,
+          variant:
+            update.status === "error" || update.status === "rejected"
+              ? "destructive"
+              : update.status === "accepted"
+              ? "success"
+              : "default",
+        });
+      },
+      offerId
+    );
   };
 
   // Derive the top 3 strategies with the highest APY

@@ -43,14 +43,29 @@ const Index = () => {
   const [showChatbot, setShowChatbot] = useState(false);
   const chatIframeRef = useRef(null);
   const location = useLocation();
-  const { address } = useAgoric();
+  const { address, offerIdsToPublicSubscribers } = useAgoric();
   const { positions, dataMode, setDataMode } = usePortfolioStore();
+
+  const hasPortfolio = (() => {
+    if (!offerIdsToPublicSubscribers) return false;
+    const iterate =
+      offerIdsToPublicSubscribers instanceof Map
+        ? offerIdsToPublicSubscribers.values()
+        : Object.values(offerIdsToPublicSubscribers);
+
+    for (const entry of iterate) {
+      if (entry && typeof entry === "object" && "portfolio" in entry) {
+        return true;
+      }
+    }
+    return false;
+  })();
 
   // Determine if we should show onboarding view
   const shouldShowOnboarding =
     !address ||
     dataMode === "no-positions" ||
-    (dataMode === "real-data" && positions.length === 0);
+    (dataMode === "real-data" && !hasPortfolio);
 
   let queryParams = `?title=${encodeURIComponent("Max Chat")}`;
   queryParams += `&theme=${encodeURIComponent("dark-blue")}`;
