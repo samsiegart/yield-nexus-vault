@@ -144,6 +144,7 @@ export const fetchRealStrategies = async () => {
     const realStrategies = [
       {
         id: "usdn-noble",
+        allocationKey: "USDN",
         protocol: "Noble",
         name: "USDN",
         apy: nobleApy,
@@ -155,6 +156,7 @@ export const fetchRealStrategies = async () => {
       },
       {
         id: "aave-eth-real",
+        allocationKey: "Aave_Ethereum",
         protocol: "AAVE",
         name: "USDC",
         apy: aprData["aave-ethereum"],
@@ -166,6 +168,7 @@ export const fetchRealStrategies = async () => {
       },
       {
         id: "compound-eth-real",
+        allocationKey: "Compound_Ethereum",
         protocol: "Compound",
         name: "USDC",
         apy: aprData["compound-ethereum"],
@@ -188,6 +191,7 @@ export const fetchRealStrategies = async () => {
     const fallbackStrategies = [
       {
         id: "usdn-noble",
+        allocationKey: "USDN",
         protocol: "Noble",
         name: "USDN",
         apy: 0,
@@ -199,6 +203,7 @@ export const fetchRealStrategies = async () => {
       },
       {
         id: "aave-eth-real",
+        allocationKey: "Aave_Ethereum",
         protocol: "AAVE",
         name: "USDC",
         apy: 0,
@@ -210,6 +215,7 @@ export const fetchRealStrategies = async () => {
       },
       {
         id: "compound-eth-real",
+        allocationKey: "Compound_Ethereum",
         protocol: "Compound",
         name: "USDC",
         apy: 0,

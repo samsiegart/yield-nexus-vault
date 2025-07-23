@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { AgoricChainStoragePathKind as Kind } from "@agoric/rpc";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ import { formatApy } from "@/lib/utils";
 
 interface SelectedOpportunity {
   id: string;
+  allocationKey: string;
   protocol: string;
   name: string;
   apy: number;
@@ -54,7 +56,11 @@ const chainIcons: Record<string, string> = {
 };
 
 const CreatePortfolioView: React.FC = () => {
-  const { walletConnection, purses } = useAgoric();
+  const {
+    walletConnection,
+    purses,
+    chainStorageWatcher: watcher,
+  } = useAgoric();
   const { dataMode, isLoadingAprs, setLoadingAprs } = usePortfolioStore();
   const [selectedOpportunities, setSelectedOpportunities] = useState<
     SelectedOpportunity[]
@@ -96,6 +102,7 @@ const CreatePortfolioView: React.FC = () => {
   const handleAddOpportunity = (strategy: (typeof availableStrategies)[0]) => {
     const newOpportunity: SelectedOpportunity = {
       id: strategy.id,
+      allocationKey: strategy.allocationKey,
       protocol: strategy.protocol,
       name: strategy.name,
       apy: strategy.apy,
@@ -590,10 +597,58 @@ const CreatePortfolioView: React.FC = () => {
 
           <Button
             className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white mt-6"
-            onClick={() => {
-              // Here you would handle the actual portfolio creation
-              console.log("Creating portfolio...");
-              setShowConfirmModal(false);
+            onClick={async () => {
+              console.log("Creating portfolio...", selectedOpportunities);
+
+              if (!walletConnection) {
+                console.error("Wallet not connected");
+                return;
+              }
+
+              // Build the target allocation map expected by the contract
+              const targetAllocation: Record<string, bigint> = {};
+              for (const opp of selectedOpportunities) {
+                targetAllocation[opp.allocationKey] = BigInt(opp.allocation);
+              }
+
+              const args = { targetAllocation };
+              console.log("Args:", args);
+
+              const getPoc26Brand = async () => {
+                const res = await watcher?.queryOnce<
+                  Array<[string, { brand: Brand }]>
+                >([Kind.Data, "published.agoricNames.vbankAsset"]);
+                const found = res?.find(([name]) => name === "upoc26");
+                return found?.[1]?.brand;
+              };
+
+              const poc26Brand = await getPoc26Brand();
+
+              if (!poc26Brand) {
+                console.error("PoC26 brand not found");
+                return;
+              }
+
+              const offerId = Date.now();
+
+              // Make the offer with the PoC26 access token in give
+              walletConnection.makeOffer(
+                {
+                  source: "agoricContract",
+                  instancePath: ["ymax0"],
+                  callPipe: [["makeOpenPortfolioInvitation", []]],
+                },
+                {
+                  give: {
+                    Access: { brand: poc26Brand, value: 1n },
+                  },
+                },
+                args,
+                (update) => {
+                  console.log("Create portfolio offer update", update.data);
+                },
+                offerId
+              );
             }}
           >
             <span>Confirm Portfolio Creation</span>
