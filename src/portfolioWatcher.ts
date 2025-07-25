@@ -1,5 +1,6 @@
 import { AgoricChainStoragePathKind as Kind } from "@agoric/rpc";
 import { Position, usePortfolioStore } from "./store";
+import { BASE_STRATEGIES } from "@/constants/strategies";
 
 /**
  * Set up watchers to track the user's on-chain portfolio positions in real-data mode.
@@ -29,7 +30,7 @@ export function setupPortfolioWatcher(
   }
 
   // Access zustand store outside React.
-  const { setPositions } = usePortfolioStore.getState();
+  const { setPositions, setTargetAllocations } = usePortfolioStore.getState();
 
   // Fetch Noble APY once and cache
   let cachedNobleApy = 0;
@@ -50,7 +51,11 @@ export function setupPortfolioWatcher(
   initNobleApy();
 
   // --- Helper to convert chain data into UI Position object -------------
-  const toPosition = (vstoragePath: string, raw: unknown): Position => {
+  const toPosition = (
+    vstoragePath: string,
+    raw: unknown,
+    targetAllocations: Record<string, number>
+  ): Position => {
     const data = raw as Record<string, unknown>;
     const tokenNameFromPath = vstoragePath.split(".").pop() ?? "Unknown";
 
@@ -72,6 +77,12 @@ export function setupPortfolioWatcher(
       apyVal = cachedNobleApy;
     }
 
+    const strategy = BASE_STRATEGIES.find(
+      (s) => s.protocol.toUpperCase() === protocol.toUpperCase()
+    );
+    const targetPercentage =
+      (strategy && targetAllocations[strategy.allocationKey]) ?? 0;
+
     const netTransfers = data.netTransfers as
       | Record<string, unknown>
       | undefined;
@@ -81,13 +92,14 @@ export function setupPortfolioWatcher(
 
     return {
       id: vstoragePath,
+      allocationKey: strategy?.allocationKey ?? "",
       protocol,
       name,
       apy: apyVal,
       chain,
       value,
       percentage: 0,
-      targetPercentage: 0,
+      targetPercentage,
     };
   };
 
@@ -128,7 +140,56 @@ export function setupPortfolioWatcher(
   }
 
   // ------------------------------------------------------------
-  // Step 2: Watch children of the positions node to discover tokens
+  // Step 2: Watch the portfolio root for target allocations
+  // ------------------------------------------------------------
+  type RawAllocationValue =
+    | number
+    | bigint
+    | string
+    | { value: string | number | bigint };
+
+  const rootWatcherStop = chainStorageWatcher.watchLatest<
+    Record<string, unknown>
+  >([Kind.Data, portfolioPath], (data) => {
+    if (data && data.targetAllocation) {
+      const rawAllocations = data.targetAllocation as Record<
+        string,
+        RawAllocationValue
+      >;
+      const allocations: Record<string, number> = {};
+      for (const key in rawAllocations) {
+        const rawValue = rawAllocations[key];
+        let numVal: number | undefined;
+        if (typeof rawValue === "number") {
+          numVal = rawValue;
+        } else if (typeof rawValue === "bigint") {
+          numVal = Number(rawValue);
+        } else if (typeof rawValue === "string") {
+          const num = Number(rawValue);
+          if (!isNaN(num)) {
+            numVal = num;
+          }
+        } else if (rawValue && typeof rawValue.value !== "undefined") {
+          const num = Number(rawValue.value);
+          if (!isNaN(num)) {
+            numVal = num;
+          }
+        }
+
+        if (numVal !== undefined) {
+          allocations[key] = numVal;
+        }
+      }
+      console.debug(
+        "[PortfolioWatcher] Received and parsed target allocations:",
+        allocations
+      );
+      setTargetAllocations(allocations);
+    }
+  });
+
+  // ------------------------------------------------------------
+  // Step 3: Watch children of the positions node to discover tokens
   // ------------------------------------------------------------
   // Keep inner watchers so we can clean them up.
   const innerStops: Array<() => void> = [];
@@ -180,21 +241,56 @@ export function setupPortfolioWatcher(
           console.debug("[PortfolioWatcher] Received data for", path, value);
           collected[path] = value;
 
+          // Get latest target allocations from store
+          const { targetAllocations } = usePortfolioStore.getState();
+
           // Convert collected map to positions array
           const positionsArr = Object.entries(collected).map(([p, v]) =>
-            toPosition(p, v)
+            toPosition(p, v, targetAllocations)
           );
           console.debug(
             "[PortfolioWatcher] Updating store positions:",
             positionsArr
           );
-          setPositions(positionsArr);
 
-          // Update overall balance
+          // Augment with strategies that have a target alloc but no position
+          const existingAllocationKeys = new Set(
+            positionsArr.map((p) => p.allocationKey)
+          );
+          Object.entries(targetAllocations).forEach(
+            ([allocationKey, target]) => {
+              if (target > 0 && !existingAllocationKeys.has(allocationKey)) {
+                const strategy = BASE_STRATEGIES.find(
+                  (s) => s.allocationKey === allocationKey
+                );
+                if (strategy) {
+                  const vstoragePath = `${positionsRoot}.${strategy.id}`;
+                  positionsArr.push({
+                    id: vstoragePath,
+                    allocationKey: strategy.allocationKey,
+                    protocol: strategy.protocol,
+                    name: strategy.name,
+                    apy: 0, // No position, so no APY to fetch
+                    chain: strategy.chain,
+                    value: 0,
+                    percentage: 0,
+                    targetPercentage: target,
+                  });
+                }
+              }
+            }
+          );
+
+          // Update overall balance and calculate percentages
           const total = positionsArr.reduce((sum, p) => sum + p.value, 0);
           usePortfolioStore.getState().setCurrentBalance(total);
 
-          // We no longer modify dataMode here. Real-data mode remains active; UI reacts to positions length.
+          const positionsWithPercentages = positionsArr.map((p) => ({
+            ...p,
+            percentage: total > 0 ? (p.value / total) * 100 : 0,
+          }));
+
+          setPositions(positionsWithPercentages);
         }
       );
       innerStops.push(stop);
@@ -204,6 +300,7 @@ export function setupPortfolioWatcher(
   // Return cleanup function
   return () => {
     childWatcherStop();
+    rootWatcherStop();
     innerStops.forEach((stop) => stop());
   };
 }

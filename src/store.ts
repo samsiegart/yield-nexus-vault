@@ -4,6 +4,7 @@ export type DataMode = "no-positions" | "has-positions" | "real-data";
 
 export interface Position {
   id: string;
+  allocationKey: string;
   protocol: string;
   name: string;
   apy: number;
@@ -25,6 +26,7 @@ export interface PortfolioData {
   error: string | null;
   dataMode: DataMode;
   isLoadingAprs: boolean;
+  targetAllocations: Record<string, number>;
 }
 
 interface PortfolioStore extends PortfolioData {
@@ -43,6 +45,7 @@ interface PortfolioStore extends PortfolioData {
   removePosition: (positionId: string) => void;
   setPositions: (positions: Position[]) => void;
   setCurrentBalance: (balance: number) => void;
+  setTargetAllocations: (allocations: Record<string, number>) => void;
 }
 
 const initialState: PortfolioData = {
@@ -56,6 +59,7 @@ const initialState: PortfolioData = {
   error: null,
   dataMode: "real-data",
   isLoadingAprs: false,
+  targetAllocations: {},
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
@@ -105,4 +109,7 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
   setPositions: (positions: Position[]) => set({ positions }),
 
   setCurrentBalance: (balance: number) => set({ currentBalance: balance }),
+
+  setTargetAllocations: (allocations: Record<string, number>) =>
+    set({ targetAllocations: allocations }),
 }));

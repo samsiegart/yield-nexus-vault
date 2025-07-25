@@ -188,11 +188,12 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
   // enter opportunity modal
   const [enterOpen, setEnterOpen] = useState(false);
-  const [selectedEnterStrategy, setSelectedEnterStrategy] =
-    useState<Strategy | null>(null);
+  const [selectedEnterStrategy, setSelectedEnterStrategy] = useState<
+    Strategy | BaseStrategy | null
+  >(null);
 
-  const availableStrategies: BaseStrategy[] =
-    dataMode === "real-data" ? BASE_STRATEGIES : (strategies as any);
+  const availableStrategies: (Strategy | BaseStrategy)[] =
+    dataMode === "real-data" ? [...BASE_STRATEGIES] : strategies;
 
   const handleQuickWithdraw = () => {
     console.log(`Withdrawing $${withdrawAmount} USDC`);
@@ -579,62 +580,14 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {topStrategies.map((strategy) => (
-            <Card
+            <StrategyCard
               key={strategy.id}
-              className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
-            >
-              <CardContent className="p-4 flex flex-col h-full">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    {protocolIcons[strategy.protocol] && (
-                      <img
-                        src={protocolIcons[strategy.protocol]}
-                        alt="protocol"
-                        className="w-5 h-5"
-                      />
-                    )}
-                    {chainIcons[strategy.chain] && (
-                      <img
-                        src={chainIcons[strategy.chain]}
-                        alt="chain"
-                        className="w-5 h-5"
-                      />
-                    )}
-                    <span className="font-semibold text-white">
-                      {strategy.protocol} {strategy.name}
-                    </span>
-                  </div>
-                  <div className="text-2xl font-bold text-green-400">
-                    {dataMode === "real-data"
-                      ? (() => {
-                          const { data, isLoading } = useStrategyMetrics(
-                            strategy.id
-                          );
-                          if (isLoading || data?.apy === undefined) {
-                            return (
-                              <div className="flex items-center">
-                                <div className="animate-spin h-4 w-4 border-2 border-green-400/60 border-t-transparent rounded-full" />
-                              </div>
-                            );
-                          }
-                          return formatApy(data.apy);
-                        })()
-                      : formatApy((strategy as any).apy)}
-                  </div>
-                </div>
-                <div className="flex-1" />
-                <Button
-                  size="sm"
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full px-5 py-1 self-center mt-4"
-                  onClick={() => {
-                    setSelectedEnterStrategy(strategy);
-                    setEnterOpen(true);
-                  }}
-                >
-                  Enter
-                </Button>
-              </CardContent>
-            </Card>
+              strategy={strategy}
+              onEnter={() => {
+                setSelectedEnterStrategy(strategy);
+                setEnterOpen(true);
+              }}
+            />
           ))}
         </div>
       </div>
@@ -693,7 +646,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 
       {optSelected && (
         <EnterStrategyModal
-          strategy={optSelected.targetStrat}
+          strategy={optSelected.targetStrat as Strategy}
           open={optOpen}
           onOpenChange={setOptOpen}
           defaultSourceId={optSelected.suggestion.sourceId}
@@ -779,7 +732,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                         {formatApy(position.apy)}
                       </td>
                       <td className="py-3 pr-4 font-semibold text-white">
-                        {position.targetPercentage}%
+                        {position.targetPercentage.toFixed(0)}%
                       </td>
                       <td className="py-3 pr-4">
                         <Badge
@@ -789,7 +742,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                             position.targetPercentage
                           )} text-xs`}
                         >
-                          {position.percentage}%
+                          {position.percentage.toFixed(2)}%
                         </Badge>
                       </td>
                       <td className="py-3 pr-4 font-semibold text-white">
@@ -805,11 +758,78 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
       </div>
 
       <EnterStrategyModal
-        strategy={selectedEnterStrategy}
+        strategy={
+          selectedEnterStrategy
+            ? ({
+                ...YIELD_STRATEGIES.find(
+                  (s) => s.id === selectedEnterStrategy.id
+                ),
+                ...selectedEnterStrategy,
+              } as Strategy)
+            : null
+        }
         open={enterOpen}
         onOpenChange={setEnterOpen}
       />
     </div>
+  );
+};
+
+const StrategyCard: React.FC<{
+  strategy: Strategy | BaseStrategy;
+  onEnter: () => void;
+}> = ({ strategy, onEnter }) => {
+  const { dataMode } = usePortfolioStore();
+  const { data, isLoading } = useStrategyMetrics(strategy.id);
+
+  const apy = dataMode === "real-data" ? data?.apy : (strategy as Strategy).apy;
+  const displayApy =
+    isLoading || apy === undefined ? (
+      <div className="flex items-center">
+        <div className="animate-spin h-4 w-4 border-2 border-green-400/60 border-t-transparent rounded-full" />
+      </div>
+    ) : (
+      formatApy(apy)
+    );
+
+  return (
+    <Card
+      key={strategy.id}
+      className="bg-slate-800/60 border-slate-700 hover:bg-slate-700/60 transition-all cursor-pointer"
+    >
+      <CardContent className="p-4 flex flex-col h-full">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            {protocolIcons[strategy.protocol] && (
+              <img
+                src={protocolIcons[strategy.protocol]}
+                alt="protocol"
+                className="w-5 h-5"
+              />
+            )}
+            {chainIcons[strategy.chain] && (
+              <img
+                src={chainIcons[strategy.chain]}
+                alt="chain"
+                className="w-5 h-5"
+              />
+            )}
+            <span className="font-semibold text-white">
+              {strategy.protocol} {strategy.name}
+            </span>
+          </div>
+          <div className="text-2xl font-bold text-green-400">{displayApy}</div>
+        </div>
+        <div className="flex-1" />
+        <Button
+          size="sm"
+          className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full px-5 py-1 self-center mt-4"
+          onClick={onEnter}
+        >
+          Enter
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
