@@ -177,8 +177,13 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
 }) => {
   const { toast } = useToast();
   const { walletConnection, purses } = useAgoric();
-  const { currentBalance, totalDeposits, positions, dataMode } =
-    usePortfolioStore();
+  const {
+    currentBalance,
+    totalDeposits,
+    positions,
+    dataMode,
+    portfolioOfferId,
+  } = usePortfolioStore();
   const gainsValue = currentBalance - totalDeposits;
   const [showDepositDialog, setShowDepositDialog] = useState(false);
   const [depositAmount, setDepositAmount] = useState("");
@@ -222,6 +227,15 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
       });
       return;
     }
+    if (!portfolioOfferId) {
+      toast({
+        title: "Portfolio Not Found",
+        description:
+          "A portfolio must be created before making a quick deposit.",
+        variant: "destructive",
+      });
+      return;
+    }
     const USDCBrand = usdcPurse?.brand;
     if (!USDCBrand) {
       toast({
@@ -233,19 +247,20 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
     }
 
     const offerId = Date.now();
-    const usdnAmount = {
+    const usdcAmount = {
       brand: USDCBrand as Brand<"nat">,
       value: depositAmountBigInt,
     };
+
     walletConnection.makeOffer(
       {
-        source: "agoricContract",
-        instancePath: ["ymax0"],
-        callPipe: [["makeOpenPortfolioInvitation", []]],
+        source: "continuing",
+        invitationMakerName: "Rebalance",
+        previousOffer: portfolioOfferId,
       },
       {
         give: {
-          USDN: usdnAmount,
+          Deposit: usdcAmount,
         },
       },
       {
@@ -253,12 +268,12 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
           {
             src: "<Deposit>",
             dest: "@agoric",
-            amount: usdnAmount,
+            amount: usdcAmount,
           },
         ],
       },
       (update) => {
-        console.log("Deposit offer update", update.data);
+        console.log("Deposit offer update", update);
         toast({
           title: `Offer ${update.status}`,
           // Show description only if message exists (e.g., Error objects)
@@ -629,7 +644,7 @@ const StrategyDashboard: React.FC<StrategyDashboardProps> = ({
                     onClick={() => {
                       setOptSelected({
                         suggestion: sugg,
-                        targetStrat: targetStrat!,
+                        targetStrat: targetStrat! as Strategy,
                         defaultAmt,
                       });
                       setOptOpen(true);

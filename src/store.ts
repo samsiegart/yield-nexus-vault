@@ -27,6 +27,7 @@ export interface PortfolioData {
   dataMode: DataMode;
   isLoadingAprs: boolean;
   targetAllocations: Record<string, number>;
+  portfolioOfferId: string | null;
 }
 
 interface PortfolioStore extends PortfolioData {
@@ -46,6 +47,7 @@ interface PortfolioStore extends PortfolioData {
   setPositions: (positions: Position[]) => void;
   setCurrentBalance: (balance: number) => void;
   setTargetAllocations: (allocations: Record<string, number>) => void;
+  setPortfolioOfferId: (id: string | null) => void;
 }
 
 const initialState: PortfolioData = {
@@ -60,6 +62,7 @@ const initialState: PortfolioData = {
   dataMode: "real-data",
   isLoadingAprs: false,
   targetAllocations: {},
+  portfolioOfferId: null,
 };
 
 export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
@@ -112,4 +115,6 @@ export const usePortfolioStore = create<PortfolioStore>((set, get) => ({
 
   setTargetAllocations: (allocations: Record<string, number>) =>
     set({ targetAllocations: allocations }),
+
+  setPortfolioOfferId: (id: string | null) => set({ portfolioOfferId: id }),
 }));

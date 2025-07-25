@@ -30,7 +30,8 @@ export function setupPortfolioWatcher(
   }
 
   // Access zustand store outside React.
-  const { setPositions, setTargetAllocations } = usePortfolioStore.getState();
+  const { setPositions, setTargetAllocations, setPortfolioOfferId } =
+    usePortfolioStore.getState();
 
   // Fetch Noble APY once and cache
   let cachedNobleApy = 0;
@@ -118,14 +119,17 @@ export function setupPortfolioWatcher(
   let portfolioPath: string | undefined;
 
   const iterate =
-    offers instanceof Map ? offers.values() : Object.values(offers);
+    offers instanceof Map ? offers.entries() : Object.entries(offers);
 
-  for (const entry of iterate) {
+  for (const [id, entry] of iterate) {
     if (entry && typeof entry === "object" && "portfolio" in entry) {
       portfolioPath = (entry as Record<string, string>).portfolio;
+      setPortfolioOfferId(id);
       console.debug(
         "[PortfolioWatcher] Found portfolio vstorage path:",
-        portfolioPath
+        portfolioPath,
+        "with offer ID:",
+        id
       );
       break;
     }
